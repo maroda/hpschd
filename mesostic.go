@@ -41,7 +41,8 @@ func pstack(s string) string {
 }
 
 func main() {
-	cmLN := "craquemattic"
+	cmLN := "the quick brown fox jumped over the lazy dog"
+	//cmLN := "craquemattic"
 
 	cmPS := pstack(cmLN)
 	fmt.Println(cmPS)
