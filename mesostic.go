@@ -1,34 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 )
 
-// this is an example of recursion, writing a comma between every 3 digits via concatenation
-func comma(s string) string {
-	n := len(s)
-	if n <= 3 {
-		return s
-	}
-	return comma(s[:n-3]) + "," + s[n-3:]
-}
-
-// intsToString is like fmt.Sprint(values) but adds commas.
-// takes an array of ints as input
-func intsToString(values []int) string {
-	var buf bytes.Buffer
-	buf.WriteByte('[')
-	for i, v := range values {
-		if i > 0 {
-			buf.WriteString(", ")
-		}
-		fmt.Fprintf(&buf, "%d", v)
-	}
-	buf.WriteByte(']')
-	return buf.String()
-}
+// define a global map
+// whose keys are the new slices
+// and values are the ordering/placements
 
 func ln2cap(s string) string {
 	spineC := "q"
@@ -38,15 +17,39 @@ func ln2cap(s string) string {
 	return res
 }
 
-func main() {
-	// this passes a slice of ints
-	// fmt.Println(intsToString([]int{4, 2, 1})) // array literal
+// pstack takes a string and finds a 'spineC' character.
+func pstack(s string) string {
+	line := []string{s}
+	fmt.Printf("Finding in: %q: ", line)
 
-	// this capitalizes the letter in the string,
-	// which would work on any size string
+	var stack []string
+	spineC := "q"
+
+	for i := 0; i < len(s); i++ {
+		appC := string(s[i])
+		if appC == spineC {
+			fmt.Println("found")
+			appC = strings.ToUpper(appC)
+			stack = append(stack, appC)
+			// copy(stack, ???) <<< this should be copied to a map of slices, which are then concatenated together
+			break
+		}
+		stack = append(stack, appC)
+	}
+	result := strings.Join(stack, "")
+	return result
+}
+
+func main() {
 	cmLN := "craquemattic"
-	cmUL := ln2cap(cmLN)
-	fmt.Println(cmUL)
+
+	cmPS := pstack(cmLN)
+	fmt.Println(cmPS)
+
+	// this also capitalizes the letter in the string,
+	// which would work on any size string
+	// cmUL := ln2cap(cmLN)
+	// fmt.Println(cmUL)
 
 	/*
 
@@ -75,9 +78,4 @@ func main() {
 		Anchor6 = e
 
 	*/
-
-	// used for the recursive comma function
-	//for i := 1; i < len(os.Args); i++ {
-	//	fmt.Printf("  %s\n", comma(os.Args[i]))
-	//}
 }
