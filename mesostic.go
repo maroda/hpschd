@@ -2,16 +2,22 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"sort"
 	"strings"
 )
 
 // LineFrag ::: Data model describing a processed LineFragment.
 type LineFrag struct {
-	Index   int  // Cardinality, starting with 0
-	SSChar  byte // The single byte of SpineString that appears in this fragment.
-	BigEnd  bool // Where in the fragment the SSChar appears: 'BigEnd=false' means the SSChar appears on the far left end of the LineFragment.
-	LineNum int  // The assigned line number for this fragment. Each will appear exactly twice: one with BigEnd=true, one with BigEnd=false.
+	Index   int    // Cardinality, starting with 0
+	SSChar  string // The single byte of SpineString that appears in this fragment.
+	BigEnd  bool   // Where in the fragment the SSChar appears: 'BigEnd=false' means the SSChar appears on the far left end of the LineFragment.
+	LineNum int    // The assigned line number for this fragment. Each will appear exactly twice: one with BigEnd=true, one with BigEnd=false.
+	Data    string // Equivalent to the Key
 }
+type LineFrags []LineFrag
 
 /* Hash table of LineFragments
 
@@ -34,31 +40,24 @@ lineEntry == lineCat <<< "craQuemattic"
 lineNew[lineEntry] == mesoLineNum <<< "craQuemattic" == 1
 
 */
-var lineFrag = make(map[string]LineFrag)
-var lineNew = make(map[string]int)
 
-// if this ends up being used, ln2cap() should take both the string and the character to replace with its capital
-// this is a lot more processing though, it might be better to do it inline with the ToUpper(SSChar)
-func ln2cap(s string) string {
-	spineC := "q"
-	spineCU := strings.ToUpper(spineC)
-	re := strings.NewReplacer(spineC, spineCU)
-	res := re.Replace(s)
-	return res
-}
+var fragCount int
+var fileLines = make(map[string]int)      // The file broken into strings with line numbers
+var fragMents = make(map[string]LineFrag) // Conglomerate line fragments, the line as the key
+var newLines = make(map[string]int)       // Concatenated fragments that make up the new lines
 
 // pstack takes a string and finds a 'spineC' character.
-func pstack(s string) string {
-	line := []string{s}
-	fmt.Printf("Finding in: %q: ", line)
+func pstack(s string, c int) string {
+	// DEBUG ::: line := []string{s}
+	// DEBUG ::: fmt.Printf("Finding in: %q: ", line)
 
 	var stack []string
-	spineC := "q"
+	SC := "m"
 
 	for i := 0; i < len(s); i++ {
 		appC := string(s[i])
-		if appC == spineC {
-			fmt.Println("found")
+		if appC == SC {
+			// DEBUG ::: fmt.Println("found")
 			appC = strings.ToUpper(appC)
 			stack = append(stack, appC)
 			// copy(stack, ???) <<< this should be copied to a map of slices, which are then concatenated together
@@ -66,45 +65,62 @@ func pstack(s string) string {
 		}
 		stack = append(stack, appC)
 	}
-	result := strings.Join(stack, "")
-	return result
+	fragment := strings.Join(stack, "")
+	fragCount++
+	// this doesn't currently remove the SSChar from the fragment!!!
+	fragMents[fragment] = LineFrag{Index: c, SSChar: SC, BigEnd: false, LineNum: fragCount, Data: fragment}
+	// DEBUG ::: fmt.Println(fragMents[fragment])
+	return fragment
 }
 
 func main() {
-	cmLN := "craquemattic"
-	cmPS := pstack(cmLN)
-	fmt.Println(cmPS)
+	var lnc int
 
-	// this also capitalizes the letter in the string,
-	// which would work on any size string
-	// cmUL := ln2cap(cmLN)
-	// fmt.Println(cmUL)
+	// process the given file, silent if no file given
+	for _, origtxt := range os.Args[1:] {
+		data, err := ioutil.ReadFile(origtxt)
+		if err != nil {
+			log.Fatal(err)
+			break
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			// DEBUG ::: fmt.Println("^^^ ", line)
+			// this might not be the right place to pass the SpineChar
+			// instead, pass the line number
+			lnc++
+			pstack(strings.ToLower(line), lnc)
+			// PS := pstack(strings.ToLower(line), lnc)
+			// fmt.Println(PS)
+		}
+	}
 
-	/*
+	var linefragments LineFrags
 
-		what i might need here is a recursive function
-		that steps through letters, comparing them against each other
+	fragKeys := make([]string, 0, len(fragMents))
 
-		or, a function that gradually increases the slice ahead of it until it gets to the next anchor letter.
+	for k, _ := range fragMents {
+		// fmt.Println(fragMents[k].LineNum)
+		linefragments = append(linefragments, fragMents[k])
+		// fmt.Println(k)
+		fragKeys = append(fragKeys, k)
+	}
 
-			String to array
-			Begin slice1 at BOL, increasing len until the contents equal Anchor1 (case agnostic)
-		Anchor1 = c
-			ToUpper Anchor1
-		Anchor1 = C
-			Assign slice1 to new array LineAnchor1L
-			Begin slice2 after Anchor1, increasing len until the contents equal Anchor2
-		Anchor2 = r
-			ToUpper Anchor2
-		Anchor2 = R
-			Assign slice2 to new array LineAnchor2L
+	// now print the mesostic with lines in sorted order
+	// DEBUG ::: fmt.Println(linefragments)
+	// DEBUG ::: fmt.Println(sort.IsSorted(linefragments))
+	sort.Sort(linefragments)
+	for i := 0; i < len(linefragments); i++ {
+		fmt.Println(linefragments[i].LineNum, linefragments[i].Data)
+	}
+}
 
-			and so on
-
-		Anchor3 = a
-		Anchor4 = q
-		Anchor5 = u
-		Anchor6 = e
-
-	*/
+// Configure linefragments Sort
+func (ls LineFrags) Len() int {
+	return len(ls)
+}
+func (ls LineFrags) Swap(i, j int) {
+	ls[i], ls[j] = ls[j], ls[i]
+}
+func (ls LineFrags) Less(i, j int) bool {
+	return ls[i].LineNum < ls[j].LineNum
 }
