@@ -5,10 +5,40 @@ import (
 	"strings"
 )
 
-// define a global map
-// whose keys are the new slices
-// and values are the ordering/placements
+// LineFrag ::: Data model describing a processed LineFragment.
+type LineFrag struct {
+	Index   int  // Cardinality, starting with 0
+	SSChar  byte // The single byte of SpineString that appears in this fragment.
+	BigEnd  bool // Where in the fragment the SSChar appears: 'BigEnd=false' means the SSChar appears on the far left end of the LineFragment.
+	LineNum int  // The assigned line number for this fragment. Each will appear exactly twice: one with BigEnd=true, one with BigEnd=false.
+}
 
+/* Hash table of LineFragments
+
+Key = The LineFragment itself
+Value = LineFrag struct
+
+Example:
+spineString = craque
+lineFeed = craquemattic
+lineFrag["cra"] == {0, "q", 1, false}
+lineFrag["uemattic"] == {1, "q", 1, true}
+
+Notice that this *removes* the SSChar from the line so the two strings can be concatenated on either side of a ToUpper(SSChar).
+
+So to construct a single line:
+
+lineFeed == "craquemattic"
+lineCat == get line number; ( lineFrag key BigEnd=false ("cra") + lineFrag ToUpper(SSChar) ("Q") + lineFrag key BigEnd=true ("uemattic") )
+lineEntry == lineCat <<< "craQuemattic"
+lineNew[lineEntry] == mesoLineNum <<< "craQuemattic" == 1
+
+*/
+var lineFrag = make(map[string]LineFrag)
+var lineNew = make(map[string]int)
+
+// if this ends up being used, ln2cap() should take both the string and the character to replace with its capital
+// this is a lot more processing though, it might be better to do it inline with the ToUpper(SSChar)
 func ln2cap(s string) string {
 	spineC := "q"
 	spineCU := strings.ToUpper(spineC)
@@ -41,9 +71,7 @@ func pstack(s string) string {
 }
 
 func main() {
-	cmLN := "the quick brown fox jumped over the lazy dog"
-	//cmLN := "craquemattic"
-
+	cmLN := "craquemattic"
 	cmPS := pstack(cmLN)
 	fmt.Println(cmPS)
 
