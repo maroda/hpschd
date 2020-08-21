@@ -55,29 +55,33 @@ func pstack(s string, c int) {
 	// DEBUG ::: fmt.Printf("Finding in: %q: ", line)
 	var stack []string
 	var charCount int
+	var SC string
 
-	// this will actually be a string slice
-	SC := "m"
+	SS := "mat"
 
-	// rebuild the line char by char
-	// this should count chars for formatting later
-	for i := 0; i < len(s); i++ {
-		appC := string(s[i])
-		if appC == SC {
-			// SC has been located, capitalize and append
-			appC = strings.ToUpper(appC)
-			stack = append(stack, appC)
-			break
+	// Step through each character in SpineString (SS)
+	for h := 0; h < len(SS); h++ {
+		SC := string(SS[h])
+
+		// !!! current problem with this is that it restarts the first string every time.
+		for i := 0; i < len(s); i++ {
+			appC := string(s[i])
+			if appC == SC {
+				appC = strings.ToUpper(appC)
+				stack = append(stack, appC)
+				// continue // <<< keeps processing the line, but at this point, we want it in a new fragment
+				break // <<< stops processing the line
+			} else {
+				stack = append(stack, appC)
+				charCount++
+			}
 		}
-		stack = append(stack, appC)
-		charCount++
+		// break exits here, so we move on to the next SC, but we lost our place in the string and have to start over!
 	}
+
 	fragment := strings.Join(stack, "")
 	fragCount++
 	fragkey := shakey(fragment)
-	// DEBUG ::: fmt.Println(fragMents[fragment])
-	// this doesn't currently remove the SSChar from the fragment!!!
-	// fragMents[fragment] = LineFrag{Index: c, SSChar: SC, BigEnd: false, LineNum: fragCount, Data: fragment}
 	fragMents[fragkey] = LineFrag{Index: c, Count: charCount, SSChar: SC, BigEnd: false, LineNum: fragCount, Data: fragment}
 
 	// record the longest fragment length for padding
@@ -112,13 +116,10 @@ func main() {
 		linefragments = append(linefragments, fragMents[k])
 	}
 
-	// somehow i need to get this number to be used for padding
-	fmt.Println(padCount)
-
+	// sorted and printed with indention and padding
 	sort.Sort(linefragments)
 	for i := 0; i < len(linefragments); i++ {
-		fmt.Printf("%s\n", linefragments[i].Data)
-		// fmt.Println(linefragments[i].LineNum, linefragments[i].Data)
+		fmt.Printf("\t%*s\n", padCount, linefragments[i].Data)
 	}
 }
 
