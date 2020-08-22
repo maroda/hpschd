@@ -55,6 +55,17 @@ CharLoop:
 		// EastSide
 		case 1:
 			// The WestSide fragment is complete, fill in the remainder for the EastSide fragment.
+			/*
+
+				TODO: This isn't actually checking for the next char yet,
+				it's checking for the current one. It should look ahead,
+				and that might be another option to the Ictus() function.
+
+				For example, Ictus() could also easily increment a "next value"
+				so that other resources don't need to do math to navigate
+				the mesostic ruleset.
+
+			*/
 			if char != sca[ictus] {
 				estack = append(estack, char)
 			} else {
