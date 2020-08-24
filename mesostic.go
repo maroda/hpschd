@@ -125,7 +125,64 @@ func shakey(k string) string {
 	return hash
 }
 
-func main() {
+// api version that accepts text blocks
+//		this will help break it down into smaller funcs
+//		don't even care if the json sent over is any good
+// t = SourceText
+// s = SpineString
+func Mesostic(t string, s string) string {
+	// var lnc int
+
+	ss = s
+	for h := 0; h < len(ss); h++ {
+		sca = append(sca, string(ss[h]))
+	}
+	return sca[0]
+
+	// this needs to scan what is sent via API
+	// but first let's just get the channel working
+
+	/*
+			for _, origtxt := range t {
+				data, err := ioutil.ReadFile(origtxt)
+				if err != nil {
+					log.Fatal(err)
+					break
+				}
+
+				// run mesoLine - which needs a new name - to process each line
+				for _, line := range strings.Split(string(data), "\n") {
+					lnc++
+					mesoLine(strings.ToLower(line), lnc)
+				}
+			}
+
+		// Sort & Print //
+		//
+		// Lines to be sorted are pushed to a slice.
+		// Sort is configured on LineNum.
+		// Uneven padding is accomplished by subtracting
+		//   the length of the current WestSide fragment
+		//   from the length of the longest WestSide fragment (padCount)
+
+		var linefragments LineFrags
+		for k := range fragMents {
+			linefragments = append(linefragments, fragMents[k])
+		}
+
+		sort.Sort(linefragments)
+
+		for i := 0; i < len(linefragments); i++ {
+			padMe := padCount - linefragments[i].WChars
+			spaces := strings.Repeat(" ", padMe)
+			mc <- fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
+		}
+	*/
+
+}
+
+// standalone version that reads text files
+func mesomain() {
 	var lnc int // line counts for the Index
 
 	for h := 0; h < len(ss); h++ {

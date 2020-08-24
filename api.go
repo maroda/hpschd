@@ -12,6 +12,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -40,7 +41,8 @@ var msgPostDur = prometheus.NewHistogram(prometheus.HistogramOpts{
 
 // data object model
 type Submit struct {
-	Text, SpineString string
+	Text        string
+	SpineString string
 }
 
 // TSubmit ::: POST Method for entry sumission.
@@ -61,6 +63,16 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 	source := subd.Text
 	spine := subd.SpineString
 
+	fmt.Fprintf(w, "Source: %s ::: Spine: %s", source, spine)
+
+	// at this point, mesostic() will be called, passing it the source and spine
+	// mc := make(chan string)
+	getMeso := Mesostic(source, spine)
+	// this works:
+	// >>> curl localhost:9999/app -d '{"text": "the quick brown fox jumped over the lazy dog", "spinestring": "craque"}'
+	// Source: the quick brown fox jumped over the lazy dog ::: Spine: craque
+	fmt.Println(getMeso)
+
 	log.Info().
 		Str("host", r.Host).
 		Str("ref", r.RemoteAddr).
@@ -80,7 +92,8 @@ func ping(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP frontend for Mesostic API
-func webmain() {
+// This controls flow.
+func main() {
 	// Prometheus
 	prometheus.MustRegister(msgPostCnt)
 	prometheus.MustRegister(msgPostDur)
@@ -91,7 +104,7 @@ func webmain() {
 	rt.Handle("/metrics", promhttp.Handler())
 
 	api := rt.PathPrefix("/app").Subrouter()
-	api.HandleFunc("", messub).Methods(http.MethodPost)
+	api.HandleFunc("", TSubmit).Methods(http.MethodPost)
 
 	if err := http.ListenAndServe(":9999", rt); err != nil {
 		log.Fatal().Err(err).Msg("startup failed!")
