@@ -24,9 +24,11 @@ type LineFrags []LineFrag
 var padCount int                          // global to track right-align padding
 var fragCount int                         // global to count total fragment combinations (i.e. lines)
 var fragMents = make(map[string]LineFrag) // Hash table of line fragments
-var ss string = "craque"                  // SpineString
-var sca []string                          // Characters in SpineString
-var ictus int                             // SpineString character address
+
+var ss string = "craque"  // SpineString
+var sca []string          // Characters in SpineString
+var ictus int             // SpineString character address
+var nexus int = ictus + 1 // Next SpineString character address
 
 // mesoLine ::: finds the SpineString (SS) characters (sc)
 func mesoLine(s string, c int) {
@@ -54,54 +56,52 @@ CharLoop:
 			}
 		// EastSide
 		case 1:
-			// The WestSide fragment is complete, fill in the remainder for the EastSide fragment.
 			/*
+				50% Mesostic ::: No occurance of the current Spine String Character in back of it.
 
-				TODO: This isn't actually checking for the next char yet,
-				it's checking for the current one. It should look ahead,
-				and that might be another option to the Ictus() function.
-
-				For example, Ictus() could also easily increment a "next value"
-				so that other resources don't need to do math to navigate
-				the mesostic ruleset.
-
+				Allow the current SpineChar in the remainder of the line,
+				but do not print anything on this line at or beyond the next SpinChar
+				because that will appear itself on the next line, and cannot have one preceeding it.
 			*/
-			if char != sca[ictus] {
+			if char != sca[nexus] {
 				estack = append(estack, char)
 			} else {
 				break CharLoop // We're done.
 			}
+
+			// 100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
 		}
 	}
 
 	// Post processing
-	Ictus(1)                                         // Increases the rotation of the SpineString
 	fragmentW := strings.Join(wstack, "")            // WestSide fragment
 	fragmentE := strings.Join(estack, "")            // EastSide fragment
-	fragCount++                                      // new line number of the current two fragments
 	fragkey := shakey(fragmentW + string(fragCount)) // unique identifier and consistent key sizes
-
-	/*
-
-		TODO: Lines without the current StringChar are being printed without that StringChar and the StringChar advances anyway
-
-	*/
+	if len(fragmentW) > padCount {                   // record the longest WestSide fragment length
+		padCount = len(fragmentW)
+	}
+	fragCount++
 
 	// Some or all of this might be better off as pointers...
 	fragMents[fragkey] = LineFrag{Index: c, LineNum: fragCount, WChars: len(fragmentW), Data: fragmentW + fragmentE}
 
-	// record the longest WestSide fragment length
-	if len(fragmentW) > padCount {
-		padCount = len(fragmentW)
-	}
+	Ictus(1) // Increases the rotation of the SpineString, i.e. the next address in sca[ictus].
 }
 
 // Ictus :: Rotates SpineString characters
 func Ictus(i int) {
+	// update global ictus
 	if ictus < len(ss)-1 {
 		ictus += i
-	} else if ictus == len(ss)-1 {
+	} else if ictus == len(ss)-1 { // last element, rotate
 		ictus = 0
+	}
+
+	// update global nexus
+	if ictus == len(ss)-1 { // now last element, next is 0
+		nexus = 0
+	} else {
+		nexus = ictus + 1
 	}
 }
 
@@ -126,8 +126,7 @@ func shakey(k string) string {
 }
 
 func main() {
-	// line counts for the Index
-	var lnc int
+	var lnc int // line counts for the Index
 
 	for h := 0; h < len(ss); h++ {
 		sca = append(sca, string(ss[h]))

@@ -14,6 +14,20 @@ Of course not all mesostics are "writing through" style as Cage did often, they 
 
 ## Display
 
+REST API currently in development.
+
+The idea is a SpineString and Text are submitted via JSON (?) to the API via POST.
+
+The API calls the mesostic stuff, gets a result, and is responsible for displaying.
+
+This is where chance operations can come into play, e.g. changing typeface and sizes.
+
+## Auto-Display
+
+Not yet in development:
+
+If no input is active, the running app will reach out to a configured endpoint, scrape a (chance-derived?) amount of text, get a randomized SpineString from a list (probably the same list used for go test), and continuously display different mesostics every indeterminate portion of chance derived windows of time.
+
 
 ## I Ching
 
