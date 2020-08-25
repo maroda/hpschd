@@ -63,15 +63,19 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 	source := subd.Text
 	spine := subd.SpineString
 
-	fmt.Fprintf(w, "Source: %s ::: Spine: %s", source, spine)
+	fmt.Fprintf(w, "Source: %s ::: Spine: %s\n", source, spine)
 
-	// at this point, mesostic() will be called, passing it the source and spine
-	// mc := make(chan string)
-	getMeso := Mesostic(source, spine)
 	// this works:
+	mcMeso := make(chan string) // new line...?
+	go Mesostic(source, spine, mcMeso)
+	showR := <-mcMeso
+	fmt.Println(showR)
+
+	// this works:
+	//getMeso := Mesostic(source, spine)
 	// >>> curl localhost:9999/app -d '{"text": "the quick brown fox jumped over the lazy dog", "spinestring": "craque"}'
 	// Source: the quick brown fox jumped over the lazy dog ::: Spine: craque
-	fmt.Println(getMeso)
+	//fmt.Println(getMeso)
 
 	log.Info().
 		Str("host", r.Host).

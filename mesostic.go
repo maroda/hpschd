@@ -130,55 +130,42 @@ func shakey(k string) string {
 //		don't even care if the json sent over is any good
 // t = SourceText
 // s = SpineString
-func Mesostic(t string, s string) string {
-	// var lnc int
+// func Mesostic(t string, s string) string {
+func Mesostic(t string, s string, o chan<- string) {
+	var lnc int
 
 	ss = s
 	for h := 0; h < len(ss); h++ {
 		sca = append(sca, string(ss[h]))
 	}
-	return sca[0]
 
-	// this needs to scan what is sent via API
-	// but first let's just get the channel working
+	// run mesoLine - which needs a new name - to process each line
+	for _, line := range strings.Split(string(t), "\n") {
+		lnc++
+		mesoLine(strings.ToLower(line), lnc)
+	}
 
-	/*
-			for _, origtxt := range t {
-				data, err := ioutil.ReadFile(origtxt)
-				if err != nil {
-					log.Fatal(err)
-					break
-				}
+	var linefragments LineFrags
+	for k := range fragMents {
+		linefragments = append(linefragments, fragMents[k])
+	}
 
-				// run mesoLine - which needs a new name - to process each line
-				for _, line := range strings.Split(string(data), "\n") {
-					lnc++
-					mesoLine(strings.ToLower(line), lnc)
-				}
-			}
+	sort.Sort(linefragments)
 
-		// Sort & Print //
+	for i := 0; i < len(linefragments); i++ {
+		padMe := padCount - linefragments[i].WChars
+		spaces := strings.Repeat(" ", padMe)
+		// fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
 		//
-		// Lines to be sorted are pushed to a slice.
-		// Sort is configured on LineNum.
-		// Uneven padding is accomplished by subtracting
-		//   the length of the current WestSide fragment
-		//   from the length of the longest WestSide fragment (padCount)
-
-		var linefragments LineFrags
-		for k := range fragMents {
-			linefragments = append(linefragments, fragMents[k])
-		}
-
-		sort.Sort(linefragments)
-
-		for i := 0; i < len(linefragments); i++ {
-			padMe := padCount - linefragments[i].WChars
-			spaces := strings.Repeat(" ", padMe)
-			mc <- fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
-		}
-	*/
-
+		// ooooh this almost works! it is properly being sent back...
+		// but i'm gonna have to figure out how to send back multiple lines
+		// and send back a formatted string... Sprint won't work, but
+		// the channel type seems wrong for Sprintf...
+		// it correctly sends the constructed Mesostic line back,
+		// but the intentional whitespace is being chopped
+		o <- fmt.Sprint(spaces, linefragments[i].Data)
+	}
+	close(o)
 }
 
 // standalone version that reads text files
