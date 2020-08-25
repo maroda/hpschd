@@ -45,8 +45,39 @@ type Submit struct {
 	SpineString string
 }
 
-// TSubmit ::: POST Method for entry sumission.
-func TSubmit(w http.ResponseWriter, r *http.Request) {
+// FSubmit ::: POST Method for multi-part form submission.
+func FSubmit(w http.ResponseWriter, r *http.Request) {
+	msgPostCnt.Add(1)
+	msgTimer := prometheus.NewTimer(msgPostDur)
+	defer msgTimer.ObserveDuration()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	args := mux.Vars(r)
+	spine := args["arg"]
+	fmt.Printf("spine = %s\n", spine)
+
+	// File upload will use ::: r.ParseMultipartForm(?? << ??)
+	r.ParseForm()
+	for k, v := range r.Form {
+		fmt.Printf("%s = %s\n", k, v)
+	}
+
+	log.Info().
+		Str("host", r.Host).
+		Str("ref", r.RemoteAddr).
+		Str("xref", r.Header.Get("X-Forwarded-For")).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("proto", r.Proto).
+		Str("agent", r.Header.Get("User-Agent")).
+		Str("response", "200").
+		Msg("New Upload")
+}
+
+// JSubmit ::: POST Method for JSON sumission.
+func JSubmit(w http.ResponseWriter, r *http.Request) {
 	msgPostCnt.Add(1)
 	msgTimer := prometheus.NewTimer(msgPostDur)
 	defer msgTimer.ObserveDuration()
@@ -71,12 +102,6 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 	showR := <-mcMeso
 	fmt.Println(showR)
 
-	// this works:
-	//getMeso := Mesostic(source, spine)
-	// >>> curl localhost:9999/app -d '{"text": "the quick brown fox jumped over the lazy dog", "spinestring": "craque"}'
-	// Source: the quick brown fox jumped over the lazy dog ::: Spine: craque
-	//fmt.Println(getMeso)
-
 	log.Info().
 		Str("host", r.Host).
 		Str("ref", r.RemoteAddr).
@@ -86,7 +111,7 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 		Str("proto", r.Proto).
 		Str("agent", r.Header.Get("User-Agent")).
 		Str("response", "200").
-		Msg("New Submission")
+		Msg("New JSON")
 }
 
 // readiness checks are counted but not logged
@@ -108,7 +133,8 @@ func main() {
 	rt.Handle("/metrics", promhttp.Handler())
 
 	api := rt.PathPrefix("/app").Subrouter()
-	api.HandleFunc("", TSubmit).Methods(http.MethodPost)
+	api.HandleFunc("", JSubmit).Methods(http.MethodPost)       // JSON
+	api.HandleFunc("/{arg}", FSubmit).Methods(http.MethodPost) // File upload
 
 	if err := http.ListenAndServe(":9999", rt); err != nil {
 		log.Fatal().Err(err).Msg("startup failed!")
