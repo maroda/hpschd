@@ -61,7 +61,7 @@ CharLoop:
 
 				Allow the current SpineChar in the remainder of the line,
 				but do not print anything on this line at or beyond the next SpinChar
-				because that will appear itself on the next line, and cannot have one preceeding it.
+				because that will appear on the next line and cannot have itself preceeding it.
 			*/
 			if char != sca[nexus] {
 				estack = append(estack, char)
@@ -70,6 +70,7 @@ CharLoop:
 			}
 
 			// 100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
+			// Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
 		}
 	}
 
