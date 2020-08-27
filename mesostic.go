@@ -1,13 +1,19 @@
+/*
+
+	Mesostic Engine
+
+*/
+
 package main
 
 import (
 	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 	"sort"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // LineFrag ::: Data model describing a processed LineFragment.
@@ -29,6 +35,13 @@ var ss string = "craque"  // SpineString
 var sca []string          // Characters in SpineString
 var ictus int             // SpineString character address
 var nexus int = ictus + 1 // Next SpineString character address
+
+// Spine ::: Process the SpineString
+func Spine() {
+	for h := 0; h < len(ss); h++ {
+		sca = append(sca, string(ss[h]))
+	}
+}
 
 // mesoLine ::: finds the SpineString (SS) characters (sc)
 func mesoLine(s string, c int) {
@@ -61,7 +74,7 @@ CharLoop:
 
 				Allow the current SpineChar in the remainder of the line,
 				but do not print anything on this line at or beyond the next SpinChar
-				because that will appear itself on the next line, and cannot have one preceeding it.
+				because that will appear on the next line and cannot have itself preceeding it.
 			*/
 			if char != sca[nexus] {
 				estack = append(estack, char)
@@ -70,6 +83,7 @@ CharLoop:
 			}
 
 			// 100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
+			// Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
 		}
 	}
 
@@ -125,26 +139,24 @@ func shakey(k string) string {
 	return hash
 }
 
-func main() {
+// mesoMain ::: Takes a filename as input for processing.
+//	Alternate main()
+//	TODO: only launch the api if a "server" flag is given.
+//			Otherwise, it's a standalone CLI tool.
+//
+func mesoMain(f string, o chan<- string) {
 	var lnc int // line counts for the Index
 
-	for h := 0; h < len(ss); h++ {
-		sca = append(sca, string(ss[h]))
+	Spine()
+
+	source, err := ioutil.ReadFile(f)
+	if err != nil {
+		log.Error()
 	}
 
-	// process the given file, silent if no file given
-	for _, origtxt := range os.Args[1:] {
-		data, err := ioutil.ReadFile(origtxt)
-		if err != nil {
-			log.Fatal(err)
-			break
-		}
-
-		// run mesoLine - which needs a new name - to process each line
-		for _, line := range strings.Split(string(data), "\n") {
-			lnc++
-			mesoLine(strings.ToLower(line), lnc)
-		}
+	for _, sline := range strings.Split(string(source), "\n") {
+		lnc++
+		mesoLine(strings.ToLower(sline), lnc)
 	}
 
 	// Sort & Print //
@@ -155,6 +167,7 @@ func main() {
 	//   the length of the current WestSide fragment
 	//   from the length of the longest WestSide fragment (padCount)
 
+	var fragstack []string
 	var linefragments LineFrags
 	for k := range fragMents {
 		linefragments = append(linefragments, fragMents[k])
@@ -165,6 +178,11 @@ func main() {
 	for i := 0; i < len(linefragments); i++ {
 		padMe := padCount - linefragments[i].WChars
 		spaces := strings.Repeat(" ", padMe)
-		fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
+		fragstack = append(fragstack, spaces)
+		fragstack = append(fragstack, linefragments[i].Data)
+		fragstack = append(fragstack, "\n")
 	}
+	mesostic := strings.Join(fragstack, "")
+	o <- fmt.Sprint(mesostic)
+	close(o)
 }

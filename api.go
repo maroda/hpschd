@@ -12,7 +12,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"text/template"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,13 +42,135 @@ var msgPostDur = prometheus.NewHistogram(prometheus.HistogramOpts{
 	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
 })
 
-// data object model
+// Submit ::: Data object model for JSON submissions
 type Submit struct {
-	Text, SpineString string
+	Text        string
+	SpineString string
 }
 
-// TSubmit ::: POST Method for entry sumission.
-func TSubmit(w http.ResponseWriter, r *http.Request) {
+// HTML template
+var templates = template.Must(template.ParseFiles("public/upload.html"))
+
+// Render HTML for FPage + FUpload functionality.
+func display(w http.ResponseWriter, page string, data interface{}) {
+	templates.ExecuteTemplate(w, page+".html", data)
+}
+
+// FPage ::: GET Method file upload.
+func FPage(w http.ResponseWriter, r *http.Request) {
+	//msgPostCnt.Add(1)
+	//msgTimer := prometheus.NewTimer(msgPostDur)
+	//defer msgTimer.ObserveDuration()
+
+	w.WriteHeader(http.StatusOK)
+
+	display(w, "upload", nil)
+
+	log.Info().
+		Str("host", r.Host).
+		Str("ref", r.RemoteAddr).
+		Str("xref", r.Header.Get("X-Forwarded-For")).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("proto", r.Proto).
+		Str("agent", r.Header.Get("User-Agent")).
+		Str("response", "200").
+		Msg("")
+}
+
+// FUpload ::: POST Method file upload.
+func FUpload(w http.ResponseWriter, r *http.Request) {
+	msgPostCnt.Add(1)
+	msgTimer := prometheus.NewTimer(msgPostDur)
+	defer msgTimer.ObserveDuration()
+
+	w.WriteHeader(http.StatusOK)
+
+	// 10MB max upload
+	r.ParseMultipartForm(10 << 20)
+
+	// Form File handler
+	ffile, handle, err := r.FormFile("source")
+	if err != nil {
+		log.Error()
+		return
+	}
+
+	defer ffile.Close()
+	fmt.Printf("Uploaded: %+v\n", handle.Filename)
+	fmt.Printf("Size: %+v\n", handle.Size)
+	fmt.Printf("MIME Type: %+v\n", handle.Header)
+
+	// for now we'll just test this and create a local copy of the file,
+	// which could then be passed to mesostic as an alternate method if the
+	// subroutine is unavailable. both should be tested.
+
+	// create the local file
+	f, err := os.Create(handle.Filename)
+	defer f.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// copy the form upload_file to the disk_file
+	if _, err := io.Copy(f, ffile); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// pass the name of the disk_file to the function
+	// mesoMain(handle.Filename)
+	mcMeso := make(chan string)
+	go mesoMain(handle.Filename, mcMeso)
+	showR := <-mcMeso
+	fmt.Println(showR)
+	fmt.Fprintf(w, "%s\n", showR)
+
+	log.Info().
+		Str("host", r.Host).
+		Str("ref", r.RemoteAddr).
+		Str("xref", r.Header.Get("X-Forwarded-For")).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("proto", r.Proto).
+		Str("agent", r.Header.Get("User-Agent")).
+		Str("response", "200").
+		Msg("New Upload")
+}
+
+// FSubmit ::: POST Method form submission.
+func FSubmit(w http.ResponseWriter, r *http.Request) {
+	msgPostCnt.Add(1)
+	msgTimer := prometheus.NewTimer(msgPostDur)
+	defer msgTimer.ObserveDuration()
+
+	w.WriteHeader(http.StatusOK)
+
+	// Take the given path as the Spine String.
+	args := mux.Vars(r)
+	spine := args["arg"]
+	fmt.Printf("spine = %s\n", spine)
+
+	r.ParseForm()
+	for k, v := range r.Form {
+		fmt.Printf("%s = %s\n", k, v)
+	}
+
+	log.Info().
+		Str("host", r.Host).
+		Str("ref", r.RemoteAddr).
+		Str("xref", r.Header.Get("X-Forwarded-For")).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("proto", r.Proto).
+		Str("agent", r.Header.Get("User-Agent")).
+		Str("response", "200").
+		Msg("New Form Submission")
+}
+
+// JSubmit ::: POST Method JSON submission.
+func JSubmit(w http.ResponseWriter, r *http.Request) {
 	msgPostCnt.Add(1)
 	msgTimer := prometheus.NewTimer(msgPostDur)
 	defer msgTimer.ObserveDuration()
@@ -61,6 +187,15 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 	source := subd.Text
 	spine := subd.SpineString
 
+	fmt.Fprintf(w, "Source: %s ::: Spine: %s\n", source, spine)
+
+	// this needs to be modified so that the JSON version
+	// can use the same function as the upload / form version
+	// mcMeso := make(chan string)
+	// go Mesostic(source, spine, mcMeso)
+	// showR := <-mcMeso
+	// fmt.Println(showR)
+
 	log.Info().
 		Str("host", r.Host).
 		Str("ref", r.RemoteAddr).
@@ -70,7 +205,7 @@ func TSubmit(w http.ResponseWriter, r *http.Request) {
 		Str("proto", r.Proto).
 		Str("agent", r.Header.Get("User-Agent")).
 		Str("response", "200").
-		Msg("New Submission")
+		Msg("New JSON")
 }
 
 // readiness checks are counted but not logged
@@ -80,7 +215,8 @@ func ping(w http.ResponseWriter, r *http.Request) {
 }
 
 // HTTP frontend for Mesostic API
-func webmain() {
+// This controls flow.
+func main() {
 	// Prometheus
 	prometheus.MustRegister(msgPostCnt)
 	prometheus.MustRegister(msgPostDur)
@@ -90,8 +226,15 @@ func webmain() {
 	rt.HandleFunc("/ping", ping)
 	rt.Handle("/metrics", promhttp.Handler())
 
+	// currently this upload method uses the hardcoded SpineString
+	// TODO: Add SpineString entry in the form
+	upload := rt.PathPrefix("/upload").Subrouter()
+	upload.HandleFunc("", FPage).Methods(http.MethodGet)    // Upload page GET
+	upload.HandleFunc("", FUpload).Methods(http.MethodPost) // File upload POST
+
 	api := rt.PathPrefix("/app").Subrouter()
-	api.HandleFunc("", messub).Methods(http.MethodPost)
+	api.HandleFunc("", JSubmit).Methods(http.MethodPost)       // JSON submission POST
+	api.HandleFunc("/{arg}", FSubmit).Methods(http.MethodPost) // Form submission POST
 
 	if err := http.ListenAndServe(":9999", rt); err != nil {
 		log.Fatal().Err(err).Msg("startup failed!")
