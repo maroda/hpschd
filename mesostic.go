@@ -1,13 +1,19 @@
+/*
+
+	Mesostic Engine
+
+*/
+
 package main
 
 import (
 	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 	"sort"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // LineFrag ::: Data model describing a processed LineFragment.
@@ -29,6 +35,13 @@ var ss string = "craque"  // SpineString
 var sca []string          // Characters in SpineString
 var ictus int             // SpineString character address
 var nexus int = ictus + 1 // Next SpineString character address
+
+// Spine ::: Process the SpineString
+func Spine() {
+	for h := 0; h < len(ss); h++ {
+		sca = append(sca, string(ss[h]))
+	}
+}
 
 // mesoLine ::: finds the SpineString (SS) characters (sc)
 func mesoLine(s string, c int) {
@@ -126,70 +139,24 @@ func shakey(k string) string {
 	return hash
 }
 
-// api version that accepts text blocks
-//		this will help break it down into smaller funcs
-//		don't even care if the json sent over is any good
-// t = SourceText
-// s = SpineString
-// func Mesostic(t string, s string) string {
-func Mesostic(t string, s string, o chan<- string) {
-	var lnc int
-
-	ss = s
-	for h := 0; h < len(ss); h++ {
-		sca = append(sca, string(ss[h]))
-	}
-
-	// run mesoLine - which needs a new name - to process each line
-	for _, line := range strings.Split(string(t), "\n") {
-		lnc++
-		mesoLine(strings.ToLower(line), lnc)
-	}
-
-	var linefragments LineFrags
-	for k := range fragMents {
-		linefragments = append(linefragments, fragMents[k])
-	}
-
-	sort.Sort(linefragments)
-
-	for i := 0; i < len(linefragments); i++ {
-		padMe := padCount - linefragments[i].WChars
-		spaces := strings.Repeat(" ", padMe)
-		// fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
-		//
-		// ooooh this almost works! it is properly being sent back...
-		// but i'm gonna have to figure out how to send back multiple lines
-		// and send back a formatted string... Sprint won't work, but
-		// the channel type seems wrong for Sprintf...
-		// it correctly sends the constructed Mesostic line back,
-		// but the intentional whitespace is being chopped
-		o <- fmt.Sprint(spaces, linefragments[i].Data)
-	}
-	close(o)
-}
-
-// standalone version that reads text files
-func mesomain() {
+// mesoMain ::: Takes a filename as input for processing.
+//	Alternate main()
+//	TODO: only launch the api if a "server" flag is given.
+//			Otherwise, it's a standalone CLI tool.
+//
+func mesoMain(f string, o chan<- string) {
 	var lnc int // line counts for the Index
 
-	for h := 0; h < len(ss); h++ {
-		sca = append(sca, string(ss[h]))
+	Spine()
+
+	source, err := ioutil.ReadFile(f)
+	if err != nil {
+		log.Error()
 	}
 
-	// process the given file, silent if no file given
-	for _, origtxt := range os.Args[1:] {
-		data, err := ioutil.ReadFile(origtxt)
-		if err != nil {
-			log.Fatal(err)
-			break
-		}
-
-		// run mesoLine - which needs a new name - to process each line
-		for _, line := range strings.Split(string(data), "\n") {
-			lnc++
-			mesoLine(strings.ToLower(line), lnc)
-		}
+	for _, sline := range strings.Split(string(source), "\n") {
+		lnc++
+		mesoLine(strings.ToLower(sline), lnc)
 	}
 
 	// Sort & Print //
@@ -200,6 +167,7 @@ func mesomain() {
 	//   the length of the current WestSide fragment
 	//   from the length of the longest WestSide fragment (padCount)
 
+	var fragstack []string
 	var linefragments LineFrags
 	for k := range fragMents {
 		linefragments = append(linefragments, fragMents[k])
@@ -210,6 +178,11 @@ func mesomain() {
 	for i := 0; i < len(linefragments); i++ {
 		padMe := padCount - linefragments[i].WChars
 		spaces := strings.Repeat(" ", padMe)
-		fmt.Printf("%s%s\n", spaces, linefragments[i].Data)
+		fragstack = append(fragstack, spaces)
+		fragstack = append(fragstack, linefragments[i].Data)
+		fragstack = append(fragstack, "\n")
 	}
+	mesostic := strings.Join(fragstack, "")
+	o <- fmt.Sprint(mesostic)
+	close(o)
 }

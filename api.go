@@ -113,13 +113,19 @@ func FUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// copy the form upload file to the disk file
+	// copy the form upload_file to the disk_file
 	if _, err := io.Copy(f, ffile); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w, "Upload successful\n")
+	// pass the name of the disk_file to the function
+	// mesoMain(handle.Filename)
+	mcMeso := make(chan string)
+	go mesoMain(handle.Filename, mcMeso)
+	showR := <-mcMeso
+	fmt.Println(showR)
+	fmt.Fprintf(w, "%s\n", showR)
 
 	log.Info().
 		Str("host", r.Host).
@@ -183,11 +189,12 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Source: %s ::: Spine: %s\n", source, spine)
 
-	// this works:
-	mcMeso := make(chan string) // new line...?
-	go Mesostic(source, spine, mcMeso)
-	showR := <-mcMeso
-	fmt.Println(showR)
+	// this needs to be modified so that the JSON version
+	// can use the same function as the upload / form version
+	// mcMeso := make(chan string)
+	// go Mesostic(source, spine, mcMeso)
+	// showR := <-mcMeso
+	// fmt.Println(showR)
 
 	log.Info().
 		Str("host", r.Host).
@@ -219,6 +226,8 @@ func main() {
 	rt.HandleFunc("/ping", ping)
 	rt.Handle("/metrics", promhttp.Handler())
 
+	// currently this upload method uses the hardcoded SpineString
+	// TODO: Add SpineString entry in the form
 	upload := rt.PathPrefix("/upload").Subrouter()
 	upload.HandleFunc("", FPage).Methods(http.MethodGet)    // Upload page GET
 	upload.HandleFunc("", FUpload).Methods(http.MethodPost) // File upload POST
