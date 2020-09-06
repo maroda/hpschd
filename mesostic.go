@@ -160,21 +160,21 @@ func mesoMain(f string, o chan<- string) {
 	}
 
 	// Sort & Print //
-	//
-	// Lines to be sorted are pushed to a slice.
-	// Sort is configured on LineNum.
-	// Uneven padding is accomplished by subtracting
-	//   the length of the current WestSide fragment
-	//   from the length of the longest WestSide fragment (padCount)
 
+	// Lines are moved from the global map to a slice to be sorted.
 	var fragstack []string
 	var linefragments LineFrags
 	for k := range fragMents {
 		linefragments = append(linefragments, fragMents[k])
+		delete(fragMents, k)
 	}
 
+	// Sort is configured on LineNum.
 	sort.Sort(linefragments)
 
+	// Uneven padding is accomplished by subtracting
+	//   the length of the current WestSide fragment
+	//   from the length of the longest WestSide fragment (padCount)
 	for i := 0; i < len(linefragments); i++ {
 		padMe := padCount - linefragments[i].WChars
 		spaces := strings.Repeat(" ", padMe)

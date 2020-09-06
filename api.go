@@ -86,8 +86,8 @@ func FUpload(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	// 10MB max upload
-	r.ParseMultipartForm(10 << 20)
+	// 5MB memory limit
+	r.ParseMultipartForm(5 << 20)
 
 	// Form File handler
 	ffile, handle, err := r.FormFile("source")
