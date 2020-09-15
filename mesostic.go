@@ -2,6 +2,19 @@
 
 	Mesostic Engine
 
+	BUG ::: if the number of lines in the source are less than the cardinality of the string,
+		the code will wrap the spine string **and leave it that way in memory**
+
+		something is needed here that resets the spine string for each goroutine that is run
+
+		which may mean it cannot be treated globally... :(
+		  the solution may ultimately be to re-do the global variable nature of
+		  the mesostic processing variables and data map and use args and pointers.
+
+	BUG ::: ??? Unsure what's going on here, but after left running for several days on ECS,
+		the whitespace padding disappeared. When the tasks/containers were restarted,
+		the whitespace padding returned. ¯\_(ツ)_/¯
+
 */
 
 package main
@@ -26,6 +39,8 @@ type LineFrag struct {
 
 // LineFrags ::: string slice for the collection of LineFrag entries to be sorted
 type LineFrags []LineFrag
+
+/* These globals should be changed to... ???  */
 
 var padCount int                          // global to track right-align padding
 var fragCount int                         // global to count total fragment combinations (i.e. lines)

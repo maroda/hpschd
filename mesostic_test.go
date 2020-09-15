@@ -1,3 +1,9 @@
+/*
+
+	This requires more, but global vars get in the way a lot.
+
+*/
+
 package main
 
 import (
