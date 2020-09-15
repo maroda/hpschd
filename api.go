@@ -14,9 +14,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -123,6 +125,8 @@ func FUpload(w http.ResponseWriter, r *http.Request) {
 	// mesoMain(handle.Filename)
 	mcMeso := make(chan string)
 	go mesoMain(handle.Filename, mcMeso)
+
+	// receive the channel data and display result
 	showR := <-mcMeso
 	fmt.Println(showR)
 	fmt.Fprintf(w, "%s\n", showR)
@@ -187,14 +191,39 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 	source := subd.Text
 	spine := subd.SpineString
 
-	fmt.Fprintf(w, "Source: %s ::: Spine: %s\n", source, spine)
+	// DEBUG ::: fmt.Fprintf(w, "Source:\n%s\nSpine:\n%s\n", source, spine)
 
-	// this needs to be modified so that the JSON version
-	// can use the same function as the upload / form version
-	// mcMeso := make(chan string)
-	// go Mesostic(source, spine, mcMeso)
-	// showR := <-mcMeso
-	// fmt.Println(showR)
+	// dump the data to a file named after the spine string
+	//
+	fT := time.Now()
+	fS := fT.Unix()
+	fN := fmt.Sprintf("%s__%d", spine, fS)
+	sB := []byte(source)
+
+	err := ioutil.WriteFile(fN, sB, 0644)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// pass the name of the disk_file to the function
+	mcMeso := make(chan string)
+	go mesoMain(fN, mcMeso)
+
+	// a version that can accept the configured spine string
+	// go mesoMain(fN, spine, mcMeso)
+
+	// receive the channel data and display result
+	showR := <-mcMeso
+	fmt.Println(showR)
+	fmt.Fprintf(w, "%s\n", showR)
+
+	// tmp file deletion should be non-blocking,
+	// but we should know about it, and log it below.
+	var ferr = os.Remove(fN)
+	if ferr != nil {
+		log.Error()
+	}
 
 	log.Info().
 		Str("host", r.Host).
@@ -205,6 +234,7 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 		Str("proto", r.Proto).
 		Str("agent", r.Header.Get("User-Agent")).
 		Str("response", "200").
+		Str("tmp", fN).
 		Msg("New JSON")
 }
 
