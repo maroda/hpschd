@@ -2,6 +2,10 @@
 
 	Mesostic Engine
 
+	BUG ::: Maybe??? Unsure what's going on here, but after left running for several days on ECS,
+		the whitespace padding disappeared. When the tasks/containers were restarted,
+		the whitespace padding returned. ¯\_(ツ)_/¯
+
 */
 
 package main
@@ -27,24 +31,40 @@ type LineFrag struct {
 // LineFrags ::: string slice for the collection of LineFrag entries to be sorted
 type LineFrags []LineFrag
 
-var padCount int                          // global to track right-align padding
-var fragCount int                         // global to count total fragment combinations (i.e. lines)
+/* These globals should be changed to... ???  */
+
+// this can be made into a return value
+var padCount int // global to track right-align padding
+
+// this will need to be passed as a pointer like the ictus/nexus stuff
+var fragCount int // global to count total fragment combinations (i.e. lines)
+
+// i'm not sure what the solution is to this, but probably pointer-esque
 var fragMents = make(map[string]LineFrag) // Hash table of line fragments
 
-var ss string = "craque"  // SpineString
-var sca []string          // Characters in SpineString
-var ictus int             // SpineString character address
-var nexus int = ictus + 1 // Next SpineString character address
-
 // Spine ::: Process the SpineString
-func Spine() {
-	for h := 0; h < len(ss); h++ {
-		sca = append(sca, string(ss[h]))
+//	Construct a slice of lowercase SpineString characters that can be rotated by Ictus().
+func Spine(z string) []string {
+	var zch []string
+
+	for h := 0; h < len(z); h++ {
+		zch = append(zch, strings.ToLower(string(z[h])))
 	}
+	return zch
 }
 
-// mesoLine ::: finds the SpineString (SS) characters (sc)
-func mesoLine(s string, c int) {
+// mesoLine ::: finds the current SpineString character in the current line
+//
+// The West Fragment is everything to the left of the SpineString character.
+// The East Fragment is everything to the right of the SpineString character.
+//
+//		s == the current line to process
+//		z == slice of SpineString characters
+//		c == line number
+//		ict == ictus of the SpineString characters
+//		nex == next ictus (not always ict + 1)
+//
+func mesoLine(s string, z []string, c int, ict *int, nex *int) {
 	var wstack []string // slice for rebuilding the west fragment
 	var estack []string // slice for rebuilding the east fragment
 	var mode int
@@ -58,7 +78,7 @@ CharLoop:
 		// WestSide
 		case 0:
 			// as long as the character isn't the current Spine Character fill in the WestSide fragment.
-			if char != sca[ictus] {
+			if char != z[*ict] {
 				wstack = append(wstack, char)
 			} else {
 				// SpineString hit!
@@ -76,14 +96,22 @@ CharLoop:
 				but do not print anything on this line at or beyond the next SpinChar
 				because that will appear on the next line and cannot have itself preceeding it.
 			*/
-			if char != sca[nexus] {
+			if char != z[*nex] {
 				estack = append(estack, char)
 			} else {
 				break CharLoop // We're done.
 			}
 
-			// 100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
-			// Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
+			/*
+				More Cases:
+
+				A bug in the algorithm:
+				If the SpineString char doesn't exist in the line at all don't print the line and retain the ictus.
+				Currently if this happens the line is printed without a SpineString character and moves on.
+
+				100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
+				Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
+			*/
 		}
 	}
 
@@ -96,26 +124,32 @@ CharLoop:
 	}
 	fragCount++
 
+	// Add results to a new map entry
 	// Some or all of this might be better off as pointers...
 	fragMents[fragkey] = LineFrag{Index: c, LineNum: fragCount, WChars: len(fragmentW), Data: fragmentW + fragmentE}
-
-	Ictus(1) // Increases the rotation of the SpineString, i.e. the next address in sca[ictus].
 }
 
-// Ictus :: Rotates SpineString characters
-func Ictus(i int) {
-	// update global ictus
-	if ictus < len(ss)-1 {
-		ictus += i
-	} else if ictus == len(ss)-1 { // last element, rotate
-		ictus = 0
+// Ictus ::: Enables the rotation of SpineString characters by operating on the index.
+//
+//			lss == length of SpineString
+//			isp == pointer to the ictus
+//			nsp == pointer to the next ictus
+func Ictus(lss int, isp *int, nsp *int) {
+	// a mesostic line has been finished,
+	// increase ictus, i.e. the current character position
+	if *isp < lss-1 {
+		*isp += 1
+	} else if *isp == lss-1 { // last element, rotate
+		*isp = 0
 	}
 
-	// update global nexus
-	if ictus == len(ss)-1 { // now last element, next is 0
-		nexus = 0
+	// this is used for lookahead
+	//  update nexus, i.e. the next character position
+	//	 if we've hit the end, we wrap to the first character
+	if *isp == lss-1 { // now last element, next is 0
+		*nsp = 0
 	} else {
-		nexus = ictus + 1
+		*nsp = *isp + 1
 	}
 }
 
@@ -144,19 +178,36 @@ func shakey(k string) string {
 //	TODO: only launch the api if a "server" flag is given.
 //			Otherwise, it's a standalone CLI tool.
 //
-func mesoMain(f string, o chan<- string) {
-	var lnc int // line counts for the Index
+// f == filename for processing
+// z == Spine String
+// o == channel for return
+//
+func mesoMain(f string, z string, o chan<- string) {
+	var lnc int               // line counts for the Index
+	var ictus int             // SpineString character address
+	var nexus int = ictus + 1 // Next SpineString character address
 
-	Spine()
+	// split the SpineString into a slice of characters
+	spineChars := Spine(z)
+
+	spineString := strings.Join(spineChars, "")
+	// DEBUG ::: fmt.Sprint(spineString)
 
 	source, err := ioutil.ReadFile(f)
 	if err != nil {
 		log.Error()
 	}
 
+	// Break down the file into lines and manipulate them into a new unordered mesostic
 	for _, sline := range strings.Split(string(source), "\n") {
 		lnc++
-		mesoLine(strings.ToLower(sline), lnc)
+
+		// mesoLine populates a global map, there is no return value
+		mesoLine(strings.ToLower(sline), spineChars, lnc, &ictus, &nexus)
+
+		// Once the mesostic line has been created and added to the data map,
+		// operate on the Ictus values to construct the next line
+		Ictus(len(spineString), &ictus, &nexus)
 	}
 
 	// Sort & Print //

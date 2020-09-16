@@ -4,6 +4,64 @@ The Writing-Through Mesostic Generator
 
 A text file for input will be transmogrified into a piece of Mesostic poetry using a configured "Spine String".
 
+## Usage
+
+### JSON API
+
+```zsh
+curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
+```
+
+For example:
+
+```zsh
+>>> curl localhost:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
+       the quiCk b
+fox jumped oveR
+         the lAzy dog
+```
+
+### Multi-Part File Upload
+
+Currently the spine string is hardcoded with CRAQUE.
+
+1. Browse to <http://www.hpschd.xyz:9999/upload>
+2. Upload file
+3. Hit button
+
+### Web Form
+
+Coming soon.
+
+## Operations
+
+*NB*: Currently this service only runs under the **hpschd.xyz** domain so that apex is currently hardwired into the code. This is intentional for now and will become configurable when the code is ready for public domain.
+
+### Tag a Release
+
+1. Commit, push, merge, and update main as necessary.
+2. In main: `git tag vX.Y.Z; git push --tags origin`
+
+### Container Build for DockerHub
+
+This is done after the changes have been committed, merged, and any tags updated.
+
+```zsh
+docker build -t chaquo:hpschd_vX.Y.Z .
+docker tag chaquo:hpschd_vX.Y.Z docker.io/maroda/chaquo:hpschd_vX.Y.Z
+docker push docker.io/maroda/chaquo:hpschd_vX.Y.Z
+```
+
+### Running on AWS ECS Fargate
+
+Once the container has been updated in DockerHub, it can be launched/updated on AWS ECS Fargate.
+
+Currently manually configured, Terraform module coming soon.
+
+### Updating Fargate
+
+The **hpschd-mesostic** cluster runs the task **mesostic** that will need to have a new revision created and loaded that downloads the new version of hpschd from DockerHub.
+
 ## Mesostics
 
 Of course not all mesostics are "writing through" style as Cage did often, they can just as easily be written as they are.
