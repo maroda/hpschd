@@ -122,9 +122,10 @@ func FUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// pass the name of the disk_file to the function
-	// mesoMain(handle.Filename)
 	mcMeso := make(chan string)
-	go mesoMain(handle.Filename, mcMeso)
+	spine := "maroda" // figuring out where this should be set, for now it's manual
+	go mesoMain(handle.Filename, spine, mcMeso)
+	// go mesoMain(handle.Filename, mcMeso)
 
 	// receive the channel data and display result
 	showR := <-mcMeso
@@ -184,34 +185,32 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 
 	var subd Submit
 
-	// decode body into struct and pull the value to be encoded
+	// decode body into struct
 	if err := json.NewDecoder(r.Body).Decode(&subd); err != nil {
 		log.Fatal().Err(err).Msg("failed to decode body")
 	}
-	source := subd.Text
-	spine := subd.SpineString
+	source := subd.Text       // the multi-line source for the Mesostic
+	spine := subd.SpineString // the SpineString for the Mesostic
 
 	// DEBUG ::: fmt.Fprintf(w, "Source:\n%s\nSpine:\n%s\n", source, spine)
 
-	// dump the data to a file named after the spine string
-	//
+	// dump the data to a tmp file
+	// 	this mimics the multi-part upload version
+	// 	placing data in a tmp file is extensible to
+	// 	placing it in a database or other fast storage
 	fT := time.Now()
 	fS := fT.Unix()
 	fN := fmt.Sprintf("%s__%d", spine, fS)
 	sB := []byte(source)
-
 	err := ioutil.WriteFile(fN, sB, 0644)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// pass the name of the disk_file to the function
+	// mesoMain receives ::: tmp filename, the SpineString, data channel
 	mcMeso := make(chan string)
-	go mesoMain(fN, mcMeso)
-
-	// a version that can accept the configured spine string
-	// go mesoMain(fN, spine, mcMeso)
+	go mesoMain(fN, spine, mcMeso)
 
 	// receive the channel data and display result
 	showR := <-mcMeso

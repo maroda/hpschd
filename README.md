@@ -8,13 +8,22 @@ A text file for input will be transmogrified into a piece of Mesostic poetry usi
 
 ### JSON API
 
-Currently the spine string is hardcoded with CRAQUE but nothing will break if others are given.
+```zsh
+curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
+```
+
+For example:
 
 ```zsh
-curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "matt"}'
+>>> curl localhost:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
+       the quiCk b
+fox jumped oveR
+         the lAzy dog
 ```
 
 ### Multi-Part File Upload
+
+Currently the spine string is hardcoded with CRAQUE.
 
 1. Browse to <http://www.hpschd.xyz:9999/upload>
 2. Upload file
