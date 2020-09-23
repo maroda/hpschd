@@ -116,10 +116,10 @@ CharLoop:
 	}
 
 	// Post processing
-	fragmentW := strings.Join(wstack, "")            // WestSide fragment
-	fragmentE := strings.Join(estack, "")            // EastSide fragment
-	fragkey := shakey(fragmentW + string(fragCount)) // unique identifier and consistent key sizes
-	if len(fragmentW) > padCount {                   // record the longest WestSide fragment length
+	fragmentW := strings.Join(wstack, "")                // WestSide fragment
+	fragmentE := strings.Join(estack, "")                // EastSide fragment
+	fragkey := shakey(fragmentW + fmt.Sprint(fragCount)) // unique identifier and consistent key sizes
+	if len(fragmentW) > padCount {                       // record the longest WestSide fragment length
 		padCount = len(fragmentW)
 	}
 	fragCount++
@@ -138,7 +138,7 @@ func Ictus(lss int, isp *int, nsp *int) {
 	// a mesostic line has been finished,
 	// increase ictus, i.e. the current character position
 	if *isp < lss-1 {
-		*isp += 1
+		*isp++
 	} else if *isp == lss-1 { // last element, rotate
 		*isp = 0
 	}
