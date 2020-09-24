@@ -14,11 +14,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"text/template"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -198,19 +196,23 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 	// 	this mimics the multi-part upload version
 	// 	placing data in a tmp file is extensible to
 	// 	placing it in a database or other fast storage
-	fT := time.Now()
-	fS := fT.Unix()
-	fN := fmt.Sprintf("%s__%d", spine, fS)
-	sB := []byte(source)
-	err := ioutil.WriteFile(fN, sB, 0644)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	/*
+		fT := time.Now()
+		fS := fT.Unix()
+		fN := fmt.Sprintf("%s__%d", spine, fS)
+		sB := []byte(source)
+		err := ioutil.WriteFile(fN, sB, 0644)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	*/
+
+	fileName := fileTmp(&spine, &source)
 
 	// mesoMain receives ::: tmp filename, the SpineString, data channel
 	mcMeso := make(chan string)
-	go mesoMain(fN, spine, mcMeso)
+	go mesoMain(fileName, spine, mcMeso)
 
 	// receive the channel data and display result
 	showR := <-mcMeso
@@ -219,7 +221,7 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 
 	// tmp file deletion should be non-blocking,
 	// but we should know about it, and log it below.
-	var ferr = os.Remove(fN)
+	var ferr = os.Remove(fileName)
 	if ferr != nil {
 		log.Error()
 	}
@@ -233,7 +235,7 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 		Str("proto", r.Proto).
 		Str("agent", r.Header.Get("User-Agent")).
 		Str("response", "200").
-		Str("tmp", fN).
+		Str("tmp", fileName).
 		Msg("New JSON")
 }
 
@@ -250,6 +252,9 @@ func main() {
 	prometheus.MustRegister(msgPostCnt)
 	prometheus.MustRegister(msgPostDur)
 	prometheus.MustRegister(pingCnt)
+
+	// Start up scheduler for fetching source text to display on the homepage as a Mesostic
+	go fetchCron()
 
 	rt := mux.NewRouter()
 	rt.HandleFunc("/ping", ping)
