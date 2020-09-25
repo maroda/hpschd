@@ -51,7 +51,7 @@ func NASAetl() {
 		log.Error().Str("code", "404").Msg("Remote data not available, deploying fallback [coming soon]")
 	}
 
-	// remove spaces from spine (camel case it)
+	// we don't want spaces in the spine string
 	trcc := strings.NewReplacer(" ", "")
 	spn := trcc.Replace(spine)
 
@@ -65,16 +65,18 @@ func NASAetl() {
 	go mesoMain(fileName, spn, mcMeso)
 	showR := <-mcMeso
 
+	// this is where we get the new mesostic filename
+	// can a semaphore of some kind be used to talk to the homepage function?
 	mesoFile := apodNew(&spine, &date, &showR)
 	fmt.Printf("%s populated with the following Mesostic: \n%s", mesoFile, showR)
 
-	// remove the temp source file
+	// remove the tmp source file
 	var ferr = os.Remove(fileName)
 	if ferr != nil {
 		log.Error()
 	}
 
-	log.Info().Str("date", date).Str("spine", spine).Msg("")
+	log.Info().Str("date", date).Str("spine", spine).Msg("NASAetl Complete")
 }
 
 func apodNew(sp *string, da *string, me *string) string {

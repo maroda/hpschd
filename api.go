@@ -49,9 +49,25 @@ type Submit struct {
 }
 
 // homepage ::: Home
+/*
+The idea with the homepage is that the Mesostic has already been built, and loading home will show one.
+
+There could be chance operations to pick which date after 2000-01-01 to use.
+
+But as the various dates are chosen over time, the cache of mesostics will increase, which means the longer an instance stays running, the more mesostic variation it gets to display.
+
+In other words, every iteration pull a new APOD and create a mesostic for the library.
+
+When index is loaded, pull a mesostic at random and display it.
+
+Decoupling the cron fetching the text from the display.
+*/
 func homepage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
+	// the data for this template (the 'nil' arg below) should be a struct of some kind
+	// identifying the data location and the title maybe?
+	// how do we get the name of the mesostic into the struct?
 	hometmpl := template.Must(template.ParseFiles("public/index.html"))
 	err := hometmpl.Execute(w, nil)
 	if err != nil {
