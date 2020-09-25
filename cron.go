@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -22,7 +23,7 @@ import (
 func fetchCron() {
 	fcron := gocron.NewScheduler(time.UTC)
 
-	_, err := fcron.Every(10).Seconds().StartImmediately().Do(NASAetl)
+	_, err := fcron.Every(30).Seconds().StartImmediately().Do(NASAetl)
 	if err != nil {
 		log.Error()
 	}
@@ -34,30 +35,40 @@ func fetchCron() {
 // This is where the URL is configured.
 //
 func NASAetl() {
-	url := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
-
 	fmt.Println("NASAetl Running")
 
-	// the title as the spine should be interesting.
+	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
+	// url := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+	url := "https://api.nasa.gov/planetary/apod?date=2000-01-01&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+
+	// the title as the spine, for now :)
 	date, spine, source := fetchSource(url)
+
+	// The most up-to-date image can throw a 404 towards the end of the day.
+	// This is meant to provide a fall-back that displays a random one in the past.
+	// Which might expand this conditional, or become a switch statement.
 	if spine == "404" {
-		// TODO: The most up-to-date image can throw a 404 towards the end of the day. Provide a fall-back that displays yesterday's.
-		log.Error()
-		return
+		log.Error().Str("code", "404").Msg("Remote data not available, deploying fallback [coming soon]")
 	}
 
-	// fmt.Println(date, spine, source)
+	// remove spaces from spine (camel case it)
+	trcc := strings.NewReplacer(" ", "")
+	spn := trcc.Replace(spine)
+
+	// convert each phrase into a line by replacing commas and periods with newlines.
+	trnl := strings.NewReplacer(". ", "\n", ", ", "\n")
+	source = trnl.Replace(source)
 
 	// the remainder of this function mimics the JSON API calls
-
-	fileName := fileTmp(&spine, &source)
-
+	fileName := fileTmp(&spn, &source)
 	mcMeso := make(chan string)
-	go mesoMain(fileName, spine, mcMeso)
+	go mesoMain(fileName, spn, mcMeso)
 	showR := <-mcMeso
-	fmt.Println(showR)
-	// fmt.Fprintf(w, "%s\n", showR)
 
+	mesoFile := apodNew(&spine, &date, &showR)
+	fmt.Printf("%s populated with the following Mesostic: \n%s", mesoFile, showR)
+
+	// remove the temp source file
 	var ferr = os.Remove(fileName)
 	if ferr != nil {
 		log.Error()
@@ -66,7 +77,25 @@ func NASAetl() {
 	log.Info().Str("date", date).Str("spine", spine).Msg("")
 }
 
+func apodNew(sp *string, da *string, me *string) string {
+	tr := strings.NewReplacer(" ", "_")
+	spn := tr.Replace(*sp)
+	fP := fmt.Sprintf("public/%s__%s", *da, spn)
+
+	// check here if fP exists and how old it is.
+	// if it does and is under X days old, do nothing
+
+	sB := []byte(*me)
+	err := ioutil.WriteFile(fP, sB, 0644)
+	if err != nil {
+		log.Error()
+	}
+	return fP
+}
+
 // fileTmp ::: Take a source string and place it in a file name after the spinestring.
+// This only creates the file by a straight byte copy.
+// Calling functions are responsible for file deletion when finished.
 func fileTmp(sp *string, so *string) string {
 	fT := time.Now()
 	fS := fT.Unix()

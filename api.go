@@ -48,23 +48,15 @@ type Submit struct {
 	SpineString string
 }
 
-// HTML template
-var templates = template.Must(template.ParseFiles("public/upload.html"))
-
-// Render HTML for FPage + FUpload functionality.
-func display(w http.ResponseWriter, page string, data interface{}) {
-	templates.ExecuteTemplate(w, page+".html", data)
-}
-
-// FPage ::: GET Method file upload.
-func FPage(w http.ResponseWriter, r *http.Request) {
-	//msgPostCnt.Add(1)
-	//msgTimer := prometheus.NewTimer(msgPostDur)
-	//defer msgTimer.ObserveDuration()
-
+// homepage ::: Home
+func homepage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
-	display(w, "upload", nil)
+	hometmpl := template.Must(template.ParseFiles("public/index.html"))
+	err := hometmpl.Execute(w, nil)
+	if err != nil {
+		log.Fatal()
+	}
 
 	log.Info().
 		Str("host", r.Host).
@@ -254,18 +246,18 @@ func main() {
 	prometheus.MustRegister(pingCnt)
 
 	// Start up scheduler for fetching source text to display on the homepage as a Mesostic
+	// the right place for this might be a / page handler that issues the goroutine
+	// fetchCron() may have to send data back on a channel?
 	go fetchCron()
 
 	rt := mux.NewRouter()
-	rt.HandleFunc("/ping", ping)
+
+	// Basic Pages
 	rt.Handle("/metrics", promhttp.Handler())
+	rt.HandleFunc("/", homepage)
+	rt.HandleFunc("/ping", ping)
 
-	// currently this upload method uses the hardcoded SpineString
-	// TODO: Add SpineString entry in the form
-	upload := rt.PathPrefix("/upload").Subrouter()
-	upload.HandleFunc("", FPage).Methods(http.MethodGet)    // Upload page GET
-	upload.HandleFunc("", FUpload).Methods(http.MethodPost) // File upload POST
-
+	// API Features
 	api := rt.PathPrefix("/app").Subrouter()
 	api.HandleFunc("", JSubmit).Methods(http.MethodPost)       // JSON submission POST
 	api.HandleFunc("/{arg}", FSubmit).Methods(http.MethodPost) // Form submission POST
