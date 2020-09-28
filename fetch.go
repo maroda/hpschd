@@ -30,8 +30,14 @@ type apodE struct {
 
 // fetchSource ::: Accepts a URL and returns three elements from the struct used to unmarshal the JSON response.
 func fetchSource(u string) (string, string, string) {
+	_, _, fu := Envelope()
+
 	url := u
-	log.Info().Str("url", url).Msg("URL Received")
+
+	log.Info().
+		Str("fu", fu).
+		Str("url", url).
+		Msg("URL Received")
 
 	// new HTTP client
 	apodClient := http.Client{
@@ -76,9 +82,10 @@ func fetchSource(u string) (string, string, string) {
 	}
 
 	log.Info().
+		Str("fu", fu).
 		Str("date", ae.Date).
 		Str("title", ae.Title).
-		Str("source", ae.Explain).
+		// Str("source", ae.Explain). // Leave this for DEBUG level of logging.
 		Msg("Source Extracted")
 	return ae.Date, ae.Title, ae.Explain
 }

@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"text/template"
@@ -49,11 +50,53 @@ type Submit struct {
 }
 
 // homepage ::: Home
+/*
+The idea with the homepage is that the Mesostic has already been built, and loading home will show one.
+
+There could be chance operations to pick which date after 2000-01-01 to use.
+
+But as the various dates are chosen over time, the cache of mesostics will increase, which means the longer an instance stays running, the more mesostic variation it gets to display.
+
+In other words, every iteration pull a new APOD and create a mesostic for the library.
+
+When index is loaded, pull a mesostic at random and display it.
+
+Decoupling the cron fetching the text from the display.
+*/
+
+// MesoPrint ::: Elements for HTML rendering
+type MesoPrint struct {
+	Title    string // Page Title
+	Mesostic string // The New Mesostic
+}
+
 func homepage(w http.ResponseWriter, r *http.Request) {
+	_, _, fu := Envelope()
+
 	w.WriteHeader(http.StatusOK)
 
+	var formatMeso MesoPrint
+
+	// read the cron channel for a new mesostic
+	// this is ALMOST working
+	// what's happening is it clears the channel of the new mesostic
+	// and if there are more mesostics waiting in the channel, it will display them
+	// but when the channel is empty, it will default here, and nothing is displayed
+	// so maybe the fix here is to "cache" the current mesostic filename somehow
+	// and if the channel is empty (no new ones), display the most recently known one
+	select {
+	case mesoFile := <-nasaNewMESO:
+		formatMeso.Title = mesoFile
+		formatMeso.Mesostic = readMesoFile(&mesoFile)
+		log.Info().Str("fu", fu).Msg("new mesostic received")
+	default:
+		formatMeso.Title = "HPSCHD"
+		log.Info().Str("fu", fu).Msg("NO ACTION")
+	}
+
+	// display the new mesostic on the homepage
 	hometmpl := template.Must(template.ParseFiles("public/index.html"))
-	err := hometmpl.Execute(w, nil)
+	err := hometmpl.Execute(w, formatMeso)
 	if err != nil {
 		log.Fatal()
 	}
@@ -68,6 +111,22 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 		Str("agent", r.Header.Get("User-Agent")).
 		Str("response", "200").
 		Msg("")
+}
+
+// readMesoFile ::: Open and read the Mesostic
+func readMesoFile(f *string) string {
+	if len(*f) == 0 {
+		log.Error().Msg("no path given")
+		return "error"
+	}
+
+	var mesoBuf []byte
+	mesoBuf, err := ioutil.ReadFile(*f)
+	if err != nil {
+		log.Error()
+	}
+
+	return string(mesoBuf)
 }
 
 // FUpload ::: POST Method file upload.
