@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strings"
 	"time"
 
@@ -171,16 +170,4 @@ func fileTmp(sp *string, so *string) string {
 		log.Error()
 	}
 	return fN
-}
-
-// Envelope ::: Returns details about the current code execution point.
-// This enables tracing in log events, for instance:
-//		_, _, fu := Envelope()
-//		fmt.Printf("current function: %s", fu)
-func Envelope() (string, int, string) {
-	pc := make([]uintptr, 15)
-	n := runtime.Callers(2, pc)
-	frames := runtime.CallersFrames(pc[:n])
-	frame, _ := frames.Next()
-	return frame.File, frame.Line, frame.Function
 }

@@ -25,24 +25,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// define prometheus metrics
-var msgPostCnt = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "mesostic_post_app_total",
-	Help: "Total number of POST me-api requests.",
-})
-
-var pingCnt = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "mesostic_ping_total",
-	Help: "Total number of Readiness pings.",
-})
-
-var msgPostDur = prometheus.NewHistogram(prometheus.HistogramOpts{
-	Name: "mesostic_post_app_timer_seconds",
-	Help: "Historgram for the runtime of POST to /app",
-	// 50 Buckets, 10ms each, starting at 1ms
-	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
-})
-
 // Submit ::: Data object model for JSON submissions
 type Submit struct {
 	Text        string
@@ -75,6 +57,7 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
+	// struct for importing into the HTML template
 	var formatMeso MesoPrint
 
 	// read the cron channel for a new mesostic
@@ -83,16 +66,13 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	// and if there are more mesostics waiting in the channel, it will display them
 	// but when the channel is empty, it will default here, and nothing is displayed
 	// so maybe the fix here is to "cache" the current mesostic filename somehow
-	// and if the channel is empty (no new ones), display the most recently known one
-	select {
-	case mesoFile := <-nasaNewMESO:
-		formatMeso.Title = mesoFile
-		formatMeso.Mesostic = readMesoFile(&mesoFile)
-		log.Info().Str("fu", fu).Msg("new mesostic received")
-	default:
-		formatMeso.Title = "HPSCHD"
-		log.Info().Str("fu", fu).Msg("NO ACTION")
-	}
+	// and if the channel is empty (no new ones), display a chance derived one from the library.
+
+	// this function reads the first item off the top of the channel
+	var mesoFile string = nasaNewREAD()
+	formatMeso.Title = mesoFile
+	formatMeso.Mesostic = readMesoFile(&mesoFile)
+	log.Info().Str("fu", fu).Msg("new mesostic received")
 
 	// display the new mesostic on the homepage
 	hometmpl := template.Must(template.ParseFiles("public/index.html"))
