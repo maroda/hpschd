@@ -47,14 +47,20 @@ func fetchSource(u string) (string, string, string) {
 	// new request object
 	req, reqErr := http.NewRequest(http.MethodGet, url, nil)
 	if reqErr != nil {
-		log.Error().Err(reqErr).Msg("")
+		log.Error().
+			Str("fu", fu).
+			Err(reqErr).
+			Msg("")
 	}
 
 	// make the request
 	req.Header.Set("User-Agent", "Go Mesostic hpschd.xyz")
 	result, resErr := apodClient.Do(req)
 	if resErr != nil {
-		log.Error().Err(resErr).Msg("")
+		log.Error().
+			Str("fu", fu).
+			Err(resErr).
+			Msg("")
 	}
 	// the timeout above caused the following error:
 	// i was testing the 404 condition, so it's possible that NASA is updating the API?
@@ -66,18 +72,28 @@ func fetchSource(u string) (string, string, string) {
 
 	body, readErr := ioutil.ReadAll(result.Body)
 	if readErr != nil {
-		log.Error().Err(readErr).Msg("")
+		log.Error().
+			Str("fu", fu).
+			Err(readErr).
+			Msg("")
 	}
 
 	ae := apodE{}
 
 	jsonErr := json.Unmarshal(body, &ae)
 	if jsonErr != nil {
-		log.Error().Err(jsonErr).Msg("unable to parse value")
+		log.Error().
+			Str("fu", fu).
+			Err(jsonErr).
+			Msg("unable to parse value")
 	}
 
 	if ae.Code == 404 {
-		log.Warn().Int("code", ae.Code).Str("msg", ae.Msg).Msg("no data")
+		log.Warn().
+			Str("fu", fu).
+			Int("code", ae.Code).
+			Str("msg", ae.Msg).
+			Msg("no data")
 		return "err", "404", ae.Msg
 	}
 
