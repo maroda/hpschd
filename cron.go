@@ -10,7 +10,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -24,9 +23,9 @@ var nasaNewMESO = make(chan string)
 
 // generic crontab emulator
 func fetchCron() {
-	// Job for fetching a new source
+	// Job for fetching a new source. Check every 15m to keep the homepage interesting.
 	fcron := gocron.NewScheduler(time.UTC)
-	_, ferr := fcron.Every(30).Seconds().StartImmediately().Do(NASAetl)
+	_, ferr := fcron.Every(900).Seconds().StartImmediately().Do(NASAetl)
 	if ferr != nil {
 		log.Error()
 	}
@@ -55,7 +54,6 @@ func NASAetl() {
 
 	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
 	url := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
-	// url := "https://api.nasa.gov/planetary/apod?date=2000-01-01&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
 
 	// the title as the spine, for now :)
 	date, spine, source := fetchSource(url)
@@ -65,6 +63,7 @@ func NASAetl() {
 	// Which might expand this conditional, or become a switch statement.
 	if spine == "404" {
 		log.Error().Str("code", "404").Msg("Remote data not available, deploying fallback [coming soon]")
+		// fallback : function that gets a random date in the past before 2000-01-01
 	}
 
 	// we don't want spaces in the spine string
@@ -89,6 +88,7 @@ func NASAetl() {
 	mesoFile, created := apodNew(&spine, &date, &showR)
 	if !created {
 		fmt.Printf("Entry exists at '%s', skipping file creation for '%s'\n", mesoFile, spine)
+		// this would be a good place to issue a random date display
 	}
 
 	// remove the tmp source file
@@ -133,41 +133,4 @@ func NASAetl() {
 		Str("filename", mesoFile).
 		// Str("mesostic", showR). // leave for DEBUG mode
 		Msg("NASA APOD Mesostic complete")
-}
-
-// apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.
-// The return values are the filename and whether the function wrote a new file.
-func apodNew(sp *string, da *string, me *string) (string, bool) {
-	mDir := "store"
-	tr := strings.NewReplacer(" ", "_")
-	spn := tr.Replace(*sp)
-	fP := fmt.Sprintf("%s/%s__%s", mDir, *da, spn)
-
-	// TODO: check how old it is and update if a retention period is met
-	if _, err := os.Stat(fP); err == nil {
-		return fP, false
-	}
-
-	// write data to a new file if it doesn't exist
-	sB := []byte(*me)
-	err := ioutil.WriteFile(fP, sB, 0644)
-	if err != nil {
-		log.Error()
-	}
-	return fP, true
-}
-
-// fileTmp ::: Take a source string and place it in a file name after the spinestring.
-// This only creates the file by a straight byte copy.
-// Calling functions are responsible for file deletion when finished.
-func fileTmp(sp *string, so *string) string {
-	fT := time.Now()
-	fS := fT.Unix()
-	fN := fmt.Sprintf("%s__%d", *sp, fS)
-	sB := []byte(*so)
-	err := ioutil.WriteFile(fN, sB, 0644)
-	if err != nil {
-		log.Error()
-	}
-	return fN
 }

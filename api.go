@@ -70,15 +70,33 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 
 	// this function reads the first item off the top of the channel
 	var mesoFile string = nasaNewREAD()
-	formatMeso.Title = mesoFile
-	formatMeso.Mesostic = readMesoFile(&mesoFile)
-	log.Info().Str("fu", fu).Msg("new mesostic received")
+
+	switch mesoFile {
+	case "HPSCHD":
+		mesoDir := "store"
+		iMesoFile := ichingMeso(mesoDir)
+		formatMeso.Title = iMesoFile
+		formatMeso.Mesostic = readMesoFile(&iMesoFile)
+
+		log.Info().
+			Str("fu", fu).
+			Str("filename", mesoFile).
+			Msg("Chance Operations Indicated")
+	default:
+		formatMeso.Title = mesoFile
+		formatMeso.Mesostic = readMesoFile(&mesoFile)
+
+		log.Info().
+			Str("fu", fu).
+			Str("filename", mesoFile).
+			Msg("Mesostic formatted")
+	}
 
 	// display the new mesostic on the homepage
 	hometmpl := template.Must(template.ParseFiles("public/index.html"))
 	err := hometmpl.Execute(w, formatMeso)
 	if err != nil {
-		log.Fatal()
+		log.Fatal().Str("fu", fu).Msg("Cannot render HTML")
 	}
 
 	log.Info().
