@@ -88,6 +88,10 @@ func fetchSource(u string) (string, string, string) {
 			Msg("unable to parse value")
 	}
 
+	// There is typically a long stretch of time from ~0000UTC to sometime the next morning when the APOD for the next day is being updated.
+	// NASA APOD API will return: 'no data available for date: 2020-09-30'
+	// TODO: this should rerun the fetch with a new url using a random date.
+	// in fact, this probably is the basis of a switch/case block for the entire function
 	if ae.Code == 404 {
 		log.Warn().
 			Str("fu", fu).
