@@ -12,13 +12,13 @@ resource "aws_ecs_task_definition" "ecs-task" {
   container_definitions    = <<MESOTASK
 [
   {
-  "image": "docker.io/maroda/chaquo:hpschd_v1.2.0",
+  "image": "${var.repository}:${var.app}_${var.release}",
   "name": "${var.epithet}",
   "essential": true,
         "logConfiguration": {
             "logDriver": "awslogs",
             "options": {
-                "awslogs-group": "/ecs/${var.epithet}",
+                "awslogs-group": "${var.app}_${var.release}",
                 "awslogs-region": "${var.aws_region}",
                 "awslogs-stream-prefix": "ecs"
               }
@@ -42,7 +42,7 @@ resource "aws_ecs_service" "ecs-service" {
   launch_type      = "FARGATE"
   platform_version = "LATEST"
 
-  desired_count = 2
+  desired_count = var.tcount
 
   lifecycle {
     create_before_destroy = true
@@ -50,7 +50,7 @@ resource "aws_ecs_service" "ecs-service" {
   }
 
   # when set to true will redeploy new containers, useful for version upgrades
-  force_new_deployment = false
+  force_new_deployment = true
 
   # required for type awsvpc
   network_configuration {

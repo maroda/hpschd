@@ -16,9 +16,9 @@ resource "aws_route53_record" "apex" {
 resource "aws_route53_record" "wildcard" {
   zone_id = aws_route53_zone.apex.zone_id
   name    = "*.${var.zoneapex}"
-  type    = "A"
-  ttl     = "300"
-  records = [var.endpoint_ip]
+  type    = "CNAME"
+  ttl     = "5"
+  records = [var.ecs]
 }
 
 resource "aws_route53_record" "www" {
