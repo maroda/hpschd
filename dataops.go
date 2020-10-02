@@ -25,8 +25,6 @@ func localDirs() {
 }
 
 // ichingMeso ::: Uses chance operations to select an existing NASA APOD Mesostic.
-// currently this will just go through them in order
-// i don't think a channel is the right thing here
 func ichingMeso(dir string) string {
 	var fileList []string
 	for _, entry := range dirents(dir) {
