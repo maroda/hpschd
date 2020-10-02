@@ -1,8 +1,6 @@
 /*
 
-	Mesostic Fetch Automator
-
-	A static URL is configured for fetching a source text via API to be transmogrified into a Mesostic for display.
+	Mesostic Scheduler and Tasks
 
 */
 
@@ -21,49 +19,51 @@ import (
 // Channel for NASAapod Mesostic publishing
 var nasaNewMESO = make(chan string)
 
-// generic crontab emulator
+// fetchCron ::: Cron emulator, currently just a single job.
 func fetchCron() {
-	// Job for fetching a new source. Check every 15m to keep the homepage interesting.
+	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
+	apodnow := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+	apodenv := "HPSCHD_NASA_APOD_URL" // Optional ENV VAR
+	url := envVar(apodenv, apodnow)   // NASA APOD URL to query, default if no ENV VAR
+	var afreq uint64 = 900            // Frequency (s) to check
+
+	// Start a new fetch job immediately, followed every afreq seconds.
 	fcron := gocron.NewScheduler(time.UTC)
-	_, ferr := fcron.Every(900).Seconds().StartImmediately().Do(NASAetl)
+	_, ferr := fcron.Every(afreq).Seconds().StartImmediately().Do(NASAetl, url)
 	if ferr != nil {
 		log.Error()
 	}
 	defer fcron.StartBlocking()
 
-	// Job for displaying the new mesostic... ???
-	// This is intended as a 'heartbeat' with the side effect of unblocking nasaNewMESO
-	/*
-		dcron := gocron.NewScheduler(time.UTC)
-		_, derr := dcron.Every(13).Seconds().StartImmediately().Do(NASAetl)
-		if derr != nil {
-			log.Error()
-		}
-
-		defer dcron.StartBlocking()
-	*/
+	// TODO: add another job to randomize the source with dates since 2000-01-01
+	// this will help populate the datastore to give homepage() more random choices
 }
 
-// NASAetl ::: Retrieve the Astronomy Picture of the Day (APOD) metadata and process it through the Mesostic engine.
-// This is where the URL is configured.
-//
-func NASAetl() {
+// NASAetl ::: Retrieve Astronomy Picture of the Day (APOD) metadata,
+// process it through the Mesostic engine, save it in a library of ephemeral copies,
+// pass the new data point (filename path) to a channel for use with displays.
+func NASAetl(url string) {
 	_, _, fu := Envelope()
 
 	fmt.Println("NASAetl Running")
-
-	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
-	url := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
 
 	// the title as the spine, for now :)
 	date, spine, source := fetchSource(url)
 
 	// The most up-to-date image can throw a 404 towards the end of the day.
-	// This is meant to provide a fall-back that displays a random one in the past.
-	// Which might expand this conditional, or become a switch statement.
+	// For now this triggers the fetch of 2004-04-04
 	if spine == "404" {
-		log.Error().Str("code", "404").Msg("Remote data not available, deploying fallback [coming soon]")
-		// fallback : function that gets a random date in the past before 2000-01-01
+		// TODO: Have this trigger a random fetch (not yet implemented) to populate the url argument
+		url := "https://api.nasa.gov/planetary/apod?date=2004-04-04&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+
+		go NASAetl(url)
+		log.Warn().
+			Str("fu", fu).
+			Str("code", "404").
+			Msg("Remote data not available, alternate ETL triggered.")
+
+		// there's no need for this ETL to continue
+		return
 	}
 
 	// we don't want spaces in the spine string

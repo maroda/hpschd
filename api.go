@@ -1,10 +1,11 @@
 /*
 
-	Mesostic API Front
+	Mesostic RESTish API
 
 	/app - API endpoint
-	/ping - a readiness check
-	/metrics - prometheus metrics
+	/ping - Readiness check
+	/metrics - Prometheus metrics
+	/homepage - Frontend displays the NASA APOD Mesostic
 
 */
 
@@ -12,7 +13,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,8 +22,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -62,21 +60,22 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	// struct for importing into the HTML template
 	var formatMeso MesoPrint
 
-	// read the cron channel for a new mesostic
-	// this is ALMOST working
-	// what's happening is it clears the channel of the new mesostic
-	// and if there are more mesostics waiting in the channel, it will display them
-	// but when the channel is empty, it will default here, and nothing is displayed
-	// so maybe the fix here is to "cache" the current mesostic filename somehow
-	// and if the channel is empty (no new ones), display a chance derived one from the library.
-
 	// this function reads the first item off the top of the channel
+	// this channel is populated with the filename of the newest created mesostic
+	// which is the result of a a 15m cronjob to fetch the NASA APOD
+	// currently this channel is non-buffered but meant to be left open
+	//
+	// when the channel is empty, this function returns a special signal HPSCHD
+	// (does the channel stay empty if the read function isn't run? does it block the cronjob? will the cronjob pile up jobs if this happens?)
+	// this instructs the loading homepage to randomly select a previously created mesostic
 	var mesoFile string = nasaNewREAD()
 
 	switch mesoFile {
 	case "HPSCHD":
-		mesoDir := "store"
-		iMesoFile := ichingMeso(mesoDir)
+		// The channel reader has returned the signal for "no more data".
+		// TODO: currently this isn't random, it needs to be
+		mesoDir := "store"               // An ephemeral 'datastore' of previously created mesostics.
+		iMesoFile := ichingMeso(mesoDir) // The i-ching-like engine for choosing a random mesostic.
 		formatMeso.Title = iMesoFile
 		formatMeso.Mesostic = readMesoFile(&iMesoFile)
 
@@ -85,6 +84,7 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 			Str("filename", mesoFile).
 			Msg("Chance Operations Indicated")
 	default:
+		// A filename exists on the channel and has been returned.
 		formatMeso.Title = mesoFile
 		formatMeso.Mesostic = readMesoFile(&mesoFile)
 
@@ -294,48 +294,4 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, r *http.Request) {
 	pingCnt.Add(1)
 	w.Write([]byte("pong\n"))
-}
-
-// HTTP frontend for Mesostic API
-// This controls flow.
-func main() {
-	// Zerolog
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-
-	// Runtime Flags
-	debug := flag.Bool("debug", false, "Log Level: DEBUG")
-
-	// Parse Flags
-	flag.Parse()
-
-	// Flag Options
-	if *debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	}
-
-	// Prometheus
-	prometheus.MustRegister(msgPostCnt)
-	prometheus.MustRegister(msgPostDur)
-	prometheus.MustRegister(pingCnt)
-
-	// Start up scheduler for fetching source text to display on the homepage as a Mesostic
-	// the right place for this might be a / page handler that issues the goroutine
-	// fetchCron() may have to send data back on a channel?
-	go fetchCron()
-
-	rt := mux.NewRouter()
-
-	// Basic Pages
-	rt.Handle("/metrics", promhttp.Handler())
-	rt.HandleFunc("/", homepage)
-	rt.HandleFunc("/ping", ping)
-
-	// API Features
-	api := rt.PathPrefix("/app").Subrouter()
-	api.HandleFunc("", JSubmit).Methods(http.MethodPost)       // JSON submission POST
-	api.HandleFunc("/{arg}", FSubmit).Methods(http.MethodPost) // Form submission POST
-
-	if err := http.ListenAndServe(":9999", rt); err != nil {
-		log.Fatal().Err(err).Msg("startup failed!")
-	}
 }

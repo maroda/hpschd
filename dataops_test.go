@@ -82,3 +82,52 @@ func TestTfileTmp(t *testing.T) {
 		t.Error(ferr)
 	}
 }
+
+// TestTenvVar ::: Process environment variables correctly with a given fallback option.
+func TestTenvVar(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target envVar() :::\n")
+
+	var getvar string
+	var testvar string
+	var testval string
+	var fallval string
+
+	// testvar does not exist, fallback provided (good config)
+	// expected return: the fallback value
+	fallval = "fallback_NoVAR"
+	getvar = envVar(testvar, fallval)
+	if getvar != fallval {
+		t.Errorf("%s, %s, %s", testvar, testval, fallval)
+	}
+	t.Logf("fallback received: %s", getvar)
+
+	// testvar exists, but is unset, no fallback (error condition)
+	// correct return: empty
+	testvar = "TTVAR"
+	fallval = ""
+	getvar = envVar(testvar, fallval)
+	if getvar != "" {
+		t.Errorf("%s, %s, %s", testvar, testval, fallval)
+	}
+	t.Logf("empty received: %s", getvar)
+
+	// testvar exists, but is unset, fallback provided (good config)
+	// correct return: value for fallval
+	fallval = "fallback_NoValue"
+	getvar = envVar(testvar, fallval)
+	if getvar != fallval {
+		t.Errorf("%s, %s, %s", testvar, testval, fallval)
+	}
+	t.Logf("fallback received: %s", getvar)
+
+	// Finally testvar is set, fallback provided (good config)
+	// correct return: value for testval
+	testval = "TestTenvVar"
+	fallval = "fallback_NoValue"
+	os.Setenv(testvar, testval) // testvar := testval
+	getvar = envVar(testvar, fallval)
+	if getvar != testval {
+		t.Errorf("%s, %s, %s", testvar, testval, fallval)
+	}
+	t.Logf("set value received: %s", getvar)
+}
