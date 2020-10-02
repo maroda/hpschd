@@ -12,6 +12,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,6 +23,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -297,6 +299,20 @@ func ping(w http.ResponseWriter, r *http.Request) {
 // HTTP frontend for Mesostic API
 // This controls flow.
 func main() {
+	// Zerolog
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	// Runtime Flags
+	debug := flag.Bool("debug", false, "Log Level: DEBUG")
+
+	// Parse Flags
+	flag.Parse()
+
+	// Flag Options
+	if *debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+
 	// Prometheus
 	prometheus.MustRegister(msgPostCnt)
 	prometheus.MustRegister(msgPostDur)

@@ -31,7 +31,7 @@ func fetchCron() {
 	}
 	defer fcron.StartBlocking()
 
-	// Job for displaying the new mesostic
+	// Job for displaying the new mesostic... ???
 	// This is intended as a 'heartbeat' with the side effect of unblocking nasaNewMESO
 	/*
 		dcron := gocron.NewScheduler(time.UTC)
@@ -131,6 +131,13 @@ func NASAetl() {
 		Str("date", date).
 		Str("spinestring", spine).
 		Str("filename", mesoFile).
-		// Str("mesostic", showR). // leave for DEBUG mode
+		Msg("NASA APOD Mesostic complete")
+
+	log.Debug().
+		Str("fu", fu).
+		Str("date", date).
+		Str("spinestring", spine).
+		Str("filename", mesoFile).
+		Str("mesostic", showR).
 		Msg("NASA APOD Mesostic complete")
 }
