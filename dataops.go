@@ -5,6 +5,8 @@
 	Currently a lot of filesystem stuff,
 		intended to be expandable into a database.
 
+	Also configurations and external variable handling.
+
 */
 
 package main
@@ -19,6 +21,15 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
+
+// envVar ::: Grab a single ENV VAR and provide a fallback configuration.
+func envVar(env, alt string) string {
+	url, ext := os.LookupEnv(env)
+	if !ext {
+		url = alt
+	}
+	return url
+}
 
 // function to set up local directories if not already present
 func localDirs() {
@@ -89,12 +100,14 @@ func fileTmp(sp *string, so *string) string {
 func nasaNewREAD() string {
 	_, _, fu := Envelope()
 
+	// The purpose here is to display the current APOD first,
+	// and random ones subsequently, including the present one.
 	select {
 	case mesoFile := <-nasaNewMESO:
 		log.Info().Str("fu", fu).Msg("Filename from nasaNewMESO consumed")
 		return mesoFile
 	default:
-		log.Info().Str("fu", fu).Msg("Filename from nasaNewMESO consumed")
+		log.Info().Str("fu", fu).Msg("No new filename presented, initiate chance operations.")
 		return "HPSCHD"
 	}
 }

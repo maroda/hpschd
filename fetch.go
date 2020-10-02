@@ -105,7 +105,14 @@ func fetchSource(u string) (string, string, string) {
 		Str("fu", fu).
 		Str("date", ae.Date).
 		Str("title", ae.Title).
-		// Str("source", ae.Explain). // Leave this for DEBUG level of logging.
 		Msg("Source Extracted")
+
+	log.Debug().
+		Str("fu", fu).
+		Str("date", ae.Date).
+		Str("title", ae.Title).
+		Str("source", ae.Explain).
+		Msg("Source Extracted")
+
 	return ae.Date, ae.Title, ae.Explain
 }
