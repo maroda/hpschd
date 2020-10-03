@@ -39,9 +39,9 @@ func fetchSource(u string) (string, string, string) {
 		Str("url", url).
 		Msg("URL Received")
 
-	// new HTTP client
+	// new HTTP client, request timeout of 10s
 	apodClient := http.Client{
-		Timeout: time.Second * 2,
+		Timeout: time.Second * 10,
 	}
 
 	// new request object
@@ -62,9 +62,6 @@ func fetchSource(u string) (string, string, string) {
 			Err(resErr).
 			Msg("")
 	}
-	// the timeout above caused the following error:
-	// i was testing the 404 condition, so it's possible that NASA is updating the API?
-	//	{"level":"fatal","error":"Get \"https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","time":"2020-09-23T18:05:38-07:00"}
 
 	if result.Body != nil {
 		defer result.Body.Close()
@@ -88,10 +85,6 @@ func fetchSource(u string) (string, string, string) {
 			Msg("unable to parse value")
 	}
 
-	// There is typically a long stretch of time from ~0000UTC to sometime the next morning when the APOD for the next day is being updated.
-	// NASA APOD API will return: 'no data available for date: 2020-09-30'
-	// TODO: this should rerun the fetch with a new url using a random date.
-	// in fact, this probably is the basis of a switch/case block for the entire function
 	if ae.Code == 404 {
 		log.Warn().
 			Str("fu", fu).
@@ -115,4 +108,12 @@ func fetchSource(u string) (string, string, string) {
 		Msg("Source Extracted")
 
 	return ae.Date, ae.Title, ae.Explain
+}
+
+// fetchRandURL ::: Returns a constructed string using a random date for the NASA APOD API query.
+func fetchRandURL() string {
+	salt := time.Now().Unix()
+	date := rndDate(salt)
+	url := "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+	return url
 }

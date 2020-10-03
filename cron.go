@@ -50,19 +50,19 @@ func NASAetl(url string) {
 	// the title as the spine, for now :)
 	date, spine, source := fetchSource(url)
 
-	// The most up-to-date image can throw a 404 towards the end of the day.
-	// For now this triggers the fetch of 2004-04-04
+	// There is typically a long stretch of time from ~0000UTC to
+	// sometime the next morning while the APOD for the next day is being updated.
+	// NASA APOD API will return: 'no data available for date: YYYY-MM-DD'
+	//
+	// Trigger a new fetch for a new mesostic added to the store and quit.
 	if spine == "404" {
-		// TODO: Have this trigger a random fetch (not yet implemented) to populate the url argument
-		url := "https://api.nasa.gov/planetary/apod?date=2004-04-04&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+		go NASAetl(fetchRandURL())
 
-		go NASAetl(url)
 		log.Warn().
 			Str("fu", fu).
 			Str("code", "404").
-			Msg("Remote data not available, alternate ETL triggered.")
+			Msg("Remote data not available, randomized ETL triggered.")
 
-		// there's no need for this ETL to continue
 		return
 	}
 
@@ -83,12 +83,21 @@ func NASAetl(url string) {
 	showR := <-mcMeso
 
 	// create new Mesostic file
-	// this *might* be better *before* the mesostic is created?
-	// but then, how do we know to send it data?
 	mesoFile, created := apodNew(&spine, &date, &showR)
+
+	// If the mesostic file already exists, no more action is needed.
+	// Trigger a new fetch for a new mesostic added to the store and quit.
+	// TODO: This check should go *before* creating the mesostic at all.
+	// 			e.g. construct the filename and check against dirents()
 	if !created {
-		fmt.Printf("Entry exists at '%s', skipping file creation for '%s'\n", mesoFile, spine)
-		// this would be a good place to issue a random date display
+		go NASAetl(fetchRandURL())
+
+		log.Warn().
+			Str("fu", fu).
+			Str("code", "204").
+			Msg("Local mesostic exists, randomized ETL triggered.")
+
+		return
 	}
 
 	// remove the tmp source file
@@ -97,34 +106,9 @@ func NASAetl(url string) {
 		log.Error()
 	}
 
-	/*
-
-		I have tested and seen that what is being produced can be displayed.
-		The problems are:
-		1. Providing a filename to the homepage loader
-		2. Formatting correctly in HTML... in plaintext, e.g. curl, the string formatting remains.
-		3. Clearing the channel of new filenames
-
-		So, similar to the mesostic files themselves,
-		the filenames will be kept "as a database" that the homepage function can check,
-		and select with chance operations.
-
-		But the channel method could still be valuable and faster.
-		So it will be kept... maybe a heartbeat cronjob makes sense?
-
-		Making it a buffered channel would also help, but increase memory a bit.
-
-	*/
-
-	// this is BLOCKING, but it works if the homepage is accessed
-	// when NOT accessed, this will continue to block, but run, and pile up mesostics in the channel
-	// additionally, the tmp file is never deleted
-	nasaNewMESO <- mesoFile // push filename of new Mesostic
-
-	// The blocking happening here is maybe important to deal with.
-	// The channel will "fill up", most probably, eating up memory?
-	// Or maybe if the file exists, homepage() doesn't need to know?
-	// this line is only reached when the channel is unblocked by accessing homepage()
+	// push filename of new Mesostic
+	// for now this is a non-buffered blocking operation
+	nasaNewMESO <- mesoFile
 
 	log.Info().
 		Str("fu", fu).
