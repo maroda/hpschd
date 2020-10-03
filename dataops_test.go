@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestTdirents ::: Create a tmp dir and file in it, get the dir list, match the file in the list.
@@ -130,4 +131,18 @@ func TestTenvVar(t *testing.T) {
 		t.Errorf("%s, %s, %s", testvar, testval, fallval)
 	}
 	t.Logf("set value received: %s", getvar)
+}
+
+// TestTrndDate ::: Test the creation of a random date
+func TestTrndDate(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target rndDate() :::\n")
+
+	salt := time.Now().Unix()
+	randomdate := rndDate(salt)
+
+	// split the string by "-"
+	// now test by checking its values mathematically.
+	// see if the random values fall within the ranges given?
+
+	fmt.Println(randomdate)
 }

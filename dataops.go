@@ -14,6 +14,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +22,38 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
+
+// rndDate ::: Produce a random date in the format YYYY-MM-DD.
+func rndDate(salt int64) string {
+
+	// rand ranges are [0,r)
+	rMi := 20 // Millinium
+	rYr := 20 // Years
+	rMo := 12 // Months
+	rDy := 31 // Days
+
+	rand.Seed(salt)
+
+	// No random for millinium
+	Mi := fmt.Sprint(rMi)
+
+	// Yr can be zero
+	Yr := fmt.Sprintf("%02d", rand.Intn(rYr))
+
+	// Don't actually use the last number but then add it back.
+	Mo := fmt.Sprintf("%02d", rand.Intn(rMo-1)+1)
+
+	// Good thing for a test:
+	// 	In rare cases this may be > 31,
+	// 	but the API should return a 404
+	// 	and that will trigger another random selection anyway.
+	Dy := fmt.Sprintf("%02d", rand.Intn(rDy)+1)
+
+	// Formatted YYYY-MM-DD date
+	newdate := Mi + Yr + "-" + Mo + "-" + Dy
+
+	return newdate
+}
 
 // envVar ::: Grab a single ENV VAR and provide a fallback configuration.
 func envVar(env, alt string) string {
@@ -44,8 +77,9 @@ func ichingMeso(dir string) string {
 		fileList = append(fileList, fullPath)
 	}
 
-	// now return only one. for now, the first. soon, randomized.
-	return fileList[0]
+	rand.Seed(time.Now().Unix())
+	randix := rand.Intn(len(fileList))
+	return fileList[randix]
 }
 
 // read a directory and return its contents
@@ -61,17 +95,26 @@ func dirents(d string) []os.FileInfo {
 // apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.
 // The return values are the filename and whether the function wrote a new file.
 func apodNew(sp *string, da *string, me *string) (string, bool) {
+	_, _, fu := Envelope()
+
 	mDir := "store"
 	tr := strings.NewReplacer(" ", "_")
 	spn := tr.Replace(*sp)
 	fP := fmt.Sprintf("%s/%s__%s", mDir, *da, spn)
 
-	// TODO: check how old it is and update if a retention period is met
-	if _, err := os.Stat(fP); err == nil {
+	// NASA API returned a 404
+	if spn == "404" {
+		log.Warn().Str("fu", fu).Msg("404 NOFILE")
 		return fP, false
 	}
 
-	// write data to a new file if it doesn't exist
+	// Mesostic file exists
+	if _, err := os.Stat(fP); err == nil {
+		log.Warn().Str("fu", fu).Msg("EXISTENT")
+		return fP, false
+	}
+
+	// Write data to a new file
 	sB := []byte(*me)
 	err := ioutil.WriteFile(fP, sB, 0644)
 	if err != nil {
