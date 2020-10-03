@@ -1,5 +1,5 @@
 FROM golang:1.15.1-alpine3.12
-LABEL version="1.3.0"
+LABEL version="1.4.0"
 LABEL vendor="Sounding"
 EXPOSE 9999
 WORKDIR /go/src/hpschd/
