@@ -24,7 +24,7 @@ variable "app" {
 }
 
 variable "release" {
-  default = "v1.3.0"
+  default = "v1.4.0"
 }
 
 variable "repository" {
