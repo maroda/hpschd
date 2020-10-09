@@ -25,7 +25,7 @@ func fetchCron() {
 	apodnow := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
 	apodenv := "HPSCHD_NASA_APOD_URL" // Optional ENV VAR
 	url := envVar(apodenv, apodnow)   // NASA APOD URL to query, default if no ENV VAR
-	var afreq uint64 = 15             // Frequency (s) to check
+	var afreq uint64 = 10             // Frequency (s) to check
 
 	// Start a new fetch job immediately, followed every afreq seconds.
 	fcron := gocron.NewScheduler(time.UTC)

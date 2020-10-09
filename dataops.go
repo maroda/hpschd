@@ -2,16 +2,16 @@
 
 	Mesostic Data Operations
 
-	Currently a lot of filesystem stuff,
-		intended to be expandable into a database.
-
-	Also configurations and external variable handling.
+	- Filesystem / database access
+	- Specialized random / hash values
+	- Configurations
 
 */
 
 package main
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -153,4 +153,13 @@ func nasaNewREAD() string {
 		log.Info().Str("fu", fu).Msg("No new filename presented, initiate chance operations.")
 		return "HPSCHD"
 	}
+}
+
+// SHA1 for consistent size keys
+func shakey(k string) string {
+	s := sha1.New()
+	s.Write([]byte(k))
+	bash := s.Sum(nil)
+	hash := fmt.Sprintf("%x", bash)
+	return hash
 }
