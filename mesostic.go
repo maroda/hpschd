@@ -80,6 +80,9 @@ CharLoop:
 			// as long as the character isn't the current Spine Character fill in the WestSide fragment.
 			if char != z[*ict] {
 				wstack = append(wstack, char)
+			} else if char == string(s[len(s)-1]) {
+				fmt.Printf("\nlast character is: %s\n", char)
+				break
 			} else {
 				// SpineString hit!
 				char = strings.ToUpper(char)  // Spine Character is capitalized

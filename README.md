@@ -52,6 +52,12 @@ docker tag chaquo:hpschd_vX.Y.Z docker.io/maroda/chaquo:hpschd_vX.Y.Z
 docker push docker.io/maroda/chaquo:hpschd_vX.Y.Z
 ```
 
+### Run Docker Locally
+
+```
+docker run --rm --name hpschd -p 9999:9999 maroda/chaquo:hpschd_v1.4.0
+```
+
 ### Running on AWS ECS Fargate
 
 Once the container has been updated in DockerHub, it can be launched/updated on AWS ECS Fargate.
