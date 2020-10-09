@@ -2,16 +2,11 @@
 
 	Mesostic Engine
 
-	BUG ::: Maybe??? Unsure what's going on here, but after left running for several days on ECS,
-		the whitespace padding disappeared. When the tasks/containers were restarted,
-		the whitespace padding returned. ¯\_(ツ)_/¯
-
 */
 
 package main
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"io/ioutil"
 	"sort"
@@ -32,9 +27,6 @@ type LineFrag struct {
 type LineFrags []LineFrag
 
 /* These globals should be changed to... ???  */
-
-// this can be made into a return value
-var padCount int // global to track right-align padding
 
 // this will need to be passed as a pointer like the ictus/nexus stuff
 var fragCount int // global to count total fragment combinations (i.e. lines)
@@ -63,8 +55,9 @@ func Spine(z string) []string {
 //		c == line number
 //		ict == ictus of the SpineString characters
 //		nex == next ictus (not always ict + 1)
+//		spaces == Pointer ::: current left-aligned whitespace
 //
-func mesoLine(s string, z []string, c int, ict *int, nex *int) {
+func mesoLine(s string, z []string, c int, ict *int, nex *int, spaces *int) {
 	var wstack []string // slice for rebuilding the west fragment
 	var estack []string // slice for rebuilding the east fragment
 	var mode int
@@ -119,14 +112,16 @@ CharLoop:
 	fragmentW := strings.Join(wstack, "")                // WestSide fragment
 	fragmentE := strings.Join(estack, "")                // EastSide fragment
 	fragkey := shakey(fragmentW + fmt.Sprint(fragCount)) // unique identifier and consistent key sizes
-	if len(fragmentW) > padCount {                       // record the longest WestSide fragment length
-		padCount = len(fragmentW)
-	}
 	fragCount++
 
 	// Add results to a new map entry
 	// Some or all of this might be better off as pointers...
 	fragMents[fragkey] = LineFrag{Index: c, LineNum: fragCount, WChars: len(fragmentW), Data: fragmentW + fragmentE}
+
+	// record the longest WestSide fragment length, but calculate it from the passed value
+	if len(fragmentW) > *spaces {
+		*spaces = len(fragmentW)
+	}
 }
 
 // Ictus ::: Enables the rotation of SpineString characters by operating on the index.
@@ -153,7 +148,7 @@ func Ictus(lss int, isp *int, nsp *int) {
 	}
 }
 
-// Sort ::: linefragments by LineNum
+// Sort Interface ::: linefragments by LineNum (lnc)
 func (ls LineFrags) Len() int {
 	return len(ls)
 }
@@ -162,15 +157,6 @@ func (ls LineFrags) Swap(i, j int) {
 }
 func (ls LineFrags) Less(i, j int) bool {
 	return ls[i].LineNum < ls[j].LineNum
-}
-
-// SHA1 for consistent size keys
-func shakey(k string) string {
-	s := sha1.New()
-	s.Write([]byte(k))
-	bash := s.Sum(nil)
-	hash := fmt.Sprintf("%x", bash)
-	return hash
 }
 
 // mesoMain ::: Takes a filename as input for processing.
@@ -186,6 +172,7 @@ func mesoMain(f string, z string, o chan<- string) {
 	var lnc int               // line counts for the Index
 	var ictus int             // SpineString character address
 	var nexus int = ictus + 1 // Next SpineString character address
+	var spaces int = 0        // Left-aligned whitespace for all lines
 
 	// split the SpineString into a slice of characters
 	spineChars := Spine(z)
@@ -203,7 +190,13 @@ func mesoMain(f string, z string, o chan<- string) {
 		lnc++
 
 		// mesoLine populates a global map, there is no return value
-		mesoLine(strings.ToLower(sline), spineChars, lnc, &ictus, &nexus)
+		mesoLine(strings.ToLower(sline), spineChars, lnc, &ictus, &nexus, &spaces)
+
+		log.Debug().
+			Int("lnc", lnc).
+			Int("ictus", ictus).
+			Int("spaces", spaces).
+			Msg("left-aligned whitespace")
 
 		// Once the mesostic line has been created and added to the data map,
 		// operate on the Ictus values to construct the next line
@@ -223,13 +216,14 @@ func mesoMain(f string, z string, o chan<- string) {
 	// Sort is configured on LineNum.
 	sort.Sort(linefragments)
 
-	// Uneven padding is accomplished by subtracting
-	//   the length of the current WestSide fragment
-	//   from the length of the longest WestSide fragment (padCount)
 	for i := 0; i < len(linefragments); i++ {
-		padMe := padCount - linefragments[i].WChars
-		spaces := strings.Repeat(" ", padMe)
-		fragstack = append(fragstack, spaces)
+		// define 'West Side' whitespace as
+		//  (length of the longest fragment) - (length of the current fragment)
+		padMe := spaces - linefragments[i].WChars
+		printspace := strings.Repeat(" ", padMe)
+
+		// format the new line with leading whitespace and trailing line return
+		fragstack = append(fragstack, printspace)
 		fragstack = append(fragstack, linefragments[i].Data)
 		fragstack = append(fragstack, "\n")
 	}
