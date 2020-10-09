@@ -19,24 +19,20 @@ import (
 // Channel for NASAapod Mesostic publishing
 var nasaNewMESO = make(chan string)
 
-// fetchCron ::: Cron emulator, currently just a single job.
-func fetchCron() {
+// fetchCron ::: Cron emulator, currently just a single job. ffs == fetch frequency in seconds
+func fetchCron(ffs uint64) {
 	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
 	apodnow := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
 	apodenv := "HPSCHD_NASA_APOD_URL" // Optional ENV VAR
 	url := envVar(apodenv, apodnow)   // NASA APOD URL to query, default if no ENV VAR
-	var afreq uint64 = 10             // Frequency (s) to check
 
-	// Start a new fetch job immediately, followed every afreq seconds.
+	// Start a new fetch job immediately, followed every ffs seconds.
 	fcron := gocron.NewScheduler(time.UTC)
-	_, ferr := fcron.Every(afreq).Seconds().StartImmediately().Do(NASAetl, url)
+	_, ferr := fcron.Every(ffs).Seconds().StartImmediately().Do(NASAetl, url)
 	if ferr != nil {
 		log.Error()
 	}
 	defer fcron.StartBlocking()
-
-	// TODO: add another job to randomize the source with dates since 2000-01-01
-	// this will help populate the datastore to give homepage() more random choices
 }
 
 // NASAetl ::: Retrieve Astronomy Picture of the Day (APOD) metadata,

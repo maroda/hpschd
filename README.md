@@ -44,12 +44,12 @@ Coming soon.
 
 ### Container Build for DockerHub
 
-This is done after the changes have been committed, merged, and any tags updated.
+Make sure to update the Dockerfile with the correct version being pushed!
 
 ```zsh
-docker build -t chaquo:hpschd_vX.Y.Z .
-docker tag chaquo:hpschd_vX.Y.Z docker.io/maroda/chaquo:hpschd_vX.Y.Z
-docker push docker.io/maroda/chaquo:hpschd_vX.Y.Z
+docker build -t chaquo:hpschd .
+docker tag chaquo:hpschd docker.io/maroda/chaquo:hpschd
+docker push docker.io/maroda/chaquo:hpschd
 ```
 
 ### Run Docker Locally
