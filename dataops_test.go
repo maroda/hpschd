@@ -16,6 +16,57 @@ import (
 	"time"
 )
 
+// TestTlocalDirs ::: Create a local dirset, remove when done.
+func TestTlocalDirs(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target localDirs() :::\n")
+
+	// testing directory
+	testDir := "./TTlocal_" + fmt.Sprint(time.Now().Unix())
+
+	// configured directories
+	locals := []string{"TTstore, maTTest"}
+
+	err := os.Mkdir(testDir, 0755)
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(testDir)
+
+	cderr := os.Chdir(testDir)
+	if cderr != nil {
+		t.Error(err)
+	}
+
+	// Create and then check the existence of each configured directory.
+	localDirs(locals)
+	for _, dir := range locals {
+		if _, lderr := os.Stat(dir); lderr != nil {
+			t.Error()
+		}
+	}
+
+	cberr := os.Chdir("../")
+	if cberr != nil {
+		t.Error(cberr)
+	}
+}
+
+// TestTextent ::: Stat a known file, stat an unknown file.
+func TestTextent(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target extent() :::\n")
+
+	knownFile := "/etc/passwd"
+	unknownFile := "/tmp/nofile" + fmt.Sprint(time.Now().Unix())
+
+	if !extent(knownFile) {
+		t.Error()
+	}
+
+	if extent(unknownFile) {
+		t.Error()
+	}
+}
+
 // TestTdirents ::: Create a tmp dir and file in it, get the dir list, match the file in the list.
 func TestTdirents(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target dirents() :::\n")

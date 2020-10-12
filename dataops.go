@@ -64,10 +64,6 @@ func envVar(env, alt string) string {
 	return url
 }
 
-// function to set up local directories if not already present
-func localDirs() {
-}
-
 // ichingMeso ::: Uses chance operations to select an existing NASA APOD Mesostic.
 func ichingMeso(dir string) string {
 	var fileList []string
@@ -76,13 +72,17 @@ func ichingMeso(dir string) string {
 		fmt.Println(fullPath)
 		fileList = append(fileList, fullPath)
 	}
+	if fileList == nil {
+		log.Error().Msg("ENOENT ::: Is the datastore available?")
+		return "ENOENT"
+	}
 
 	rand.Seed(time.Now().Unix())
 	randix := rand.Intn(len(fileList))
 	return fileList[randix]
 }
 
-// read a directory and return its contents
+// dirents ::: read a directory and return its contents
 func dirents(d string) []os.FileInfo {
 	ents, err := ioutil.ReadDir(d)
 	if err != nil {
@@ -90,6 +90,27 @@ func dirents(d string) []os.FileInfo {
 		return nil
 	}
 	return ents
+}
+
+// extent ::: file system entry exists
+func extent(fs string) bool {
+	if _, err := os.Stat(fs); err != nil {
+		return false
+	}
+	return true
+}
+
+// localDirs ::: set up permanent data directories
+func localDirs(ld []string) {
+	for _, dir := range ld {
+		if !extent(dir) {
+			log.Info().Str("directory", dir).Msg("Dir not found, creating.")
+			err := os.Mkdir(dir, 0700)
+			if err != nil {
+				log.Error()
+			}
+		}
+	}
 }
 
 // apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.

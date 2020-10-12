@@ -34,6 +34,10 @@ func main() {
 		log.Info().Msg("Log level set to DEBUG")
 	}
 
+	// Set up data locations
+	datadirs := []string{"store"}
+	localDirs(datadirs)
+
 	// Fetching the NASA APOD for the homepage display is default behavior.
 	// The 'nofetch' flag turns this off.
 	// It does NOT turn off the homepage using any previously stored mesostics.
