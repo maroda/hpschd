@@ -12,6 +12,39 @@ import (
 	"testing"
 )
 
+// TestTmesoMain ::: Create a mesostic from a static source file.
+// For now this test is display-only.
+// TODO: Checksum or something.
+func TestTmesoMain(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target mesoMain() :::\n")
+
+	// This mimics the calls made by various API endpoints.
+	// There is no automatic filename creation, a known file is used to match.
+	fileName := "sources/lorenipsum.txt"
+	spine := "craque"
+
+	// mesoMain receives ::: tmp filename, the SpineString, data channel
+	mcMeso := make(chan string)
+	go mesoMain(fileName, spine, mcMeso)
+
+	// receive the channel data and display result
+	mesostic := <-mcMeso
+	fmt.Println(mesostic)
+}
+
+/*
+                    lorem ipsum dolor sit amet, Consectetu
+                      elit, sed do eiusmod tempoR incididunt ut l
+                                        dolore mAgna ali
+nostrud exercitation ullamco laboris nisi ut aliQ
+                            ex ea commodo conseqUat. duis aut
+                                               rEprehenderit in voluptate velit esse
+                    eu fugiat nulla pariatur. exCepteu
+                                 cupidatat non pRoident, sunt in culp
+                                deserunt mollit Anim id est laborum.
+
+
+*/
 // TestTIctus ::: Using a specific string, test this function's ability to rotate through each character.
 func TestTIctus(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target Ictus() :::\n")

@@ -59,63 +59,67 @@ func Spine(z string) []string {
 //		spaces == Pointer ::: current left-aligned whitespace
 //
 func mesoLine(s string, z []string, c int, ict *int, nex *int, spaces *int) bool {
-	var wstack []string   // slice for rebuilding the west fragment
-	var estack []string   // slice for rebuilding the east fragment
-	var found bool = true // assert the character will be found
-	var mode int          // Choose the Mesostic algorithm mode
+	var wstack []string // slice for rebuilding the west fragment
+	var estack []string // slice for rebuilding the east fragment
+	var found bool      // the character was found in this line
+	mode := 0           // the Mesostic algorithm mode, always starts with 0
 
 CharLoop:
 	// step through the current string and process mesostic rules
 	for i := 0; i < len(s); i++ {
 		char := string(s[i])
 
+		/*
+			WestSide ::: Everything to the LEFT AND INCLUDING the SpineString, this is mode 0
+			EastSide ::: Everything to the RIGHT AND NOT the SpineString, includes:
+
+			mode 1 50% Mesostic ::: No occurance of the current Spine String Character in back of it.
+			mode 2 100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
+			mode 3 Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
+		*/
 		switch mode {
-		// WestSide
 		case 0:
-			// as long as the character isn't the current Spine Character fill in the WestSide fragment.
-			if char != z[*ict] {
-				wstack = append(wstack, char)
-				if char == string(s[len(s)-1]) {
-					// if we've reached this point,
-					// the SpineString character didn't appear.
-					// currently, the line is thown out.
-					log.Debug().Str("final", char).Msg("EOL")
-					found = false
-					wstack = nil
-					wstack = append(wstack, " ")
+			switch {
+			case char != z[*ict]:
+				// not found
+				log.Debug().Str("z", z[*ict]).Msg("notfound")
+				if i == len(s)-1 {
+					// last character of the line
+					if char != z[*ict] {
+						// the final character is not the SpineString
+						// in this version, the line is thrown out
+						// in future versions, the line may only be thrown out
+						// if a certain tolerance is met
+						// e.g.: the number of false successes
+						log.Debug().Str("SSCHAR", z[*ict]).Str("LNCHAR", char).Msg("EOL")
+						found = false
+						wstack = nil
+						break CharLoop // We're done.
+					}
 				}
-			} else {
+				wstack = append(wstack, char)
+			case char == z[*ict]:
 				// SpineString hit!
+				log.Debug().Str("z", z[*ict]).Msg("spinestr")
+				found = true
 				char = strings.ToUpper(char)  // Spine Character is capitalized
 				wstack = append(wstack, char) // Appended to the string
 				mode = 1
 				break // re-evaluate the switch with mode set
 			}
-		// EastSide
 		case 1:
 			/*
-				50% Mesostic ::: No occurance of the current Spine String Character in back of it.
-
-				Allow the current SpineChar in the remainder of the line,
-				but do not print anything on this line at or beyond the next SpinChar
+				Allow the current SSchar in the remainder of the line,
+				but do not print anything on this line at or beyond the next SSchar
 				because that will appear on the next line and cannot have itself preceeding it.
+
+				This method preserves the line returns found in the source.
 			*/
 			if char != z[*nex] {
 				estack = append(estack, char)
 			} else {
 				break CharLoop // We're done.
 			}
-
-			/*
-				More Cases:
-
-				A bug in the algorithm:
-				If the SpineString char doesn't exist in the line at all don't print the line and retain the ictus.
-				Currently if this happens the line is printed without a SpineString character and moves on.
-
-				100% Mesostic ::: No occurance of the current Spine String Character in back OR in front of it.
-				Meso-Acrostic ::: No pre/post rules, any character can appear before or after the Spine String Char.
-			*/
 		}
 	}
 
@@ -215,12 +219,29 @@ func mesoMain(f string, z string, o chan<- string) {
 		log.Error()
 	}
 
-	// Break down the file into lines and manipulate them into a new unordered mesostic
+	/*
+		Break down the file into lines and manipulate them into a new unordered mesostic.
+		mesoLine() populates a global map, returning a boolean success status.
+
+		If the SpineString character was found,
+			Ictus() rotates the SpineString position forward one spot,
+			and the next line processed will have the next character to match.
+		If the SpineString character wasn't found,
+			rewind the SpineString with Preus(),
+			making the SpineString character "stay in place", so it is matched in the next line.
+
+			Currently, if the SSchar is never found, the Mesostic will be effectively blank.
+			There might need to be a tolerance setting here:
+			If not found X number of times (say, a fraction of the length of source), then rotate fwd.
+	*/
 	for _, sline := range strings.Split(string(source), "\n") {
 		lnc++
 
-		// mesoLine populates a global map, returning a boolean success status
 		success := mesoLine(strings.ToLower(sline), spineChars, lnc, &ictus, &nexus, &spaces)
+		if !success {
+			Preus(len(spineString), &ictus, &nexus)
+		}
+		Ictus(len(spineString), &ictus, &nexus)
 
 		log.Debug().
 			Int("lnc", lnc).
@@ -228,17 +249,6 @@ func mesoMain(f string, z string, o chan<- string) {
 			Int("spaces", spaces).
 			Bool("success", success).
 			Msg("")
-
-		// Once the mesostic line has been created and added to the data map,
-		// operate on the Ictus values to construct the next line
-		if !success {
-			// The character wasn't found, rewind the SpineString.
-			// The following Ictus() call makes this effectively "staying still"
-
-			/// UGH this is not working
-			// Preus(len(spineString), &ictus, &nexus)
-		}
-		Ictus(len(spineString), &ictus, &nexus)
 	}
 
 	// Sort & Print //
