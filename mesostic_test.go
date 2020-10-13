@@ -29,28 +29,61 @@ func TestTIctus(t *testing.T) {
 	if spineChars[ictus] != "c" {
 		t.Errorf("%q\n", spineString)
 	}
-	// fmt.Println(ictus, spineChars[ictus])
 
 	Ictus(len(spineString), &ictus, &nexus)
 
 	if spineChars[ictus] != "r" {
 		t.Errorf("%q\n", spineString)
 	}
-	// fmt.Println(ictus, spineChars[ictus])
 
 	Ictus(len(spineString), &ictus, &nexus)
 
 	if spineChars[ictus] != "a" {
 		t.Errorf("%q\n", spineString)
 	}
-	// fmt.Println(ictus, spineChars[ictus])
 
 	Ictus(len(spineString), &ictus, &nexus)
 
 	if spineChars[ictus] != "c" {
 		t.Errorf("Rotation failed! %q\n", spineString)
 	}
-	// fmt.Println(ictus, spineChars[ictus])
+}
+
+// TestTPreus ::: Using a specific string, test this function's ability to rewind the SpineString rotation done by Ictus().
+func TestTPreus(t *testing.T) {
+	fmt.Printf("\n\t::: Test Target Preus() :::\n")
+
+	spineString := "cra"
+	ictus := 0
+	nexus := 1
+
+	var spineChars []string
+	for h := 0; h < len(spineString); h++ {
+		spineChars = append(spineChars, strings.ToLower(string(spineString[h])))
+	}
+
+	// Test each character and then that it rewinds to the one before it.
+	if spineChars[ictus] != "c" {
+		t.Errorf("%q\n", spineString)
+	}
+
+	Preus(len(spineString), &ictus, &nexus)
+
+	if spineChars[ictus] != "a" {
+		t.Errorf("%q\n", spineString)
+	}
+
+	Preus(len(spineString), &ictus, &nexus)
+
+	if spineChars[ictus] != "r" {
+		t.Errorf("%q\n", spineString)
+	}
+
+	Preus(len(spineString), &ictus, &nexus)
+
+	if spineChars[ictus] != "c" {
+		t.Errorf("Rewind failed! %q\n", spineString)
+	}
 }
 
 /*

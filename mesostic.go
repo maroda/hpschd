@@ -79,7 +79,6 @@ CharLoop:
 					// if we've reached this point,
 					// the SpineString character didn't appear.
 					// currently, the line is thown out.
-					// TODO: allow this line to be consumed by the next SpineString character
 					log.Debug().Str("final", char).Msg("EOL")
 					found = false
 					wstack = nil
@@ -143,6 +142,7 @@ CharLoop:
 //			lss == length of SpineString
 //			isp == pointer to the ictus
 //			nsp == pointer to the next ictus
+//
 func Ictus(lss int, isp *int, nsp *int) {
 	// a mesostic line has been finished,
 	// increase ictus, i.e. the current character position
@@ -156,6 +156,22 @@ func Ictus(lss int, isp *int, nsp *int) {
 	//  update nexus, i.e. the next character position
 	//	 if we've hit the end, we wrap to the first character
 	if *isp == lss-1 { // now last element, next is 0
+		*nsp = 0
+	} else {
+		*nsp = *isp + 1
+	}
+}
+
+// Preus ::: Ictus, but rewind.
+func Preus(lss int, isp *int, nsp *int) {
+	if *isp > 0 { // not first element, simple subtraction
+		*isp--
+	} else { // now first element, rotate backwards
+		*isp = lss - 1
+	}
+
+	// nexus is still calcualted the same way
+	if *isp == lss-1 {
 		*nsp = 0
 	} else {
 		*nsp = *isp + 1
@@ -206,15 +222,22 @@ func mesoMain(f string, z string, o chan<- string) {
 		// mesoLine populates a global map, returning a boolean success status
 		success := mesoLine(strings.ToLower(sline), spineChars, lnc, &ictus, &nexus, &spaces)
 
-		log.Debug().Int("lnc", lnc).Int("ictus", ictus).Int("spaces", spaces).Msg("")
-
-		if !success {
-			log.Debug().Bool("success", success).Msg("ENOENT")
-			// 	break
-		}
+		log.Debug().
+			Int("lnc", lnc).
+			Int("ictus", ictus).
+			Int("spaces", spaces).
+			Bool("success", success).
+			Msg("")
 
 		// Once the mesostic line has been created and added to the data map,
 		// operate on the Ictus values to construct the next line
+		if !success {
+			// The character wasn't found, rewind the SpineString.
+			// The following Ictus() call makes this effectively "staying still"
+
+			/// UGH this is not working
+			// Preus(len(spineString), &ictus, &nexus)
+		}
 		Ictus(len(spineString), &ictus, &nexus)
 	}
 
