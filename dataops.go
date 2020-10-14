@@ -150,7 +150,7 @@ func apodNew(sp *string, da *string, me *string) (string, bool) {
 func fileTmp(sp *string, so *string) string {
 	fT := time.Now()
 	fS := fT.Unix()
-	fN := fmt.Sprintf("%s__%d", *sp, fS)
+	fN := fmt.Sprintf("txrx/%s__%d", *sp, fS)
 	sB := []byte(*so)
 	err := ioutil.WriteFile(fN, sB, 0644)
 	if err != nil {

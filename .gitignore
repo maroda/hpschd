@@ -1,5 +1,3 @@
-*__*
-.htaccess
-.terraform/
-terraform.tfstate.backup
+./store
+./txrx
 .DS_Store

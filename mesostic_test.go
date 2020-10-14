@@ -8,6 +8,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
@@ -20,31 +22,66 @@ func TestTmesoMain(t *testing.T) {
 
 	// This mimics the calls made by various API endpoints.
 	// There is no automatic filename creation, a known file is used to match.
-	fileName := "sources/lorenipsum.txt"
+	// this test is "failing" because the mesoMain function now *removes* the file it is passed.
+
+	// Set up store
+	TTstore, err := ioutil.TempDir(".", "store")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(TTstore)
+
+	// Set up tmp
+	TTdir, err := ioutil.TempDir(".", "txrx")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(TTdir)
+
 	spine := "craque"
+	sourceFile := "sources/lorenipsum-plaintext.txt"
+	testTmp := "sources/lorenipsum.txt"
+
+	// simulate reading an input source
+	bRead, berr := ioutil.ReadFile(sourceFile)
+	if berr != nil {
+		t.Error(berr)
+	}
+
+	// write a scratch tmp file, which mesoMain removes
+	werr := ioutil.WriteFile(testTmp, bRead, 0644)
+	if werr != nil {
+		t.Error(werr)
+	}
 
 	// mesoMain receives ::: tmp filename, the SpineString, data channel
 	mcMeso := make(chan string)
-	go mesoMain(fileName, spine, mcMeso)
+	go mesoMain(testTmp, spine, mcMeso)
 
 	// receive the channel data and display result
 	mesostic := <-mcMeso
 	fmt.Println(mesostic)
+
+	// check if mesoMain removed the scratch tmp correctly
+	if _, lserr := os.Stat(testTmp); lserr == nil {
+		t.Error(lserr)
+	}
+
+	/*
+	                       lorem ipsum dolor sit amet, Consectetu
+	                         elit, sed do eiusmod tempoR incididunt ut l
+	                                           dolore mAgna ali
+	   nostrud exercitation ullamco laboris nisi ut aliQ
+	                               ex ea commodo conseqUat. duis aut
+	                                                  rEprehenderit in voluptate velit esse
+	                       eu fugiat nulla pariatur. exCepteu
+	                                    cupidatat non pRoident, sunt in culp
+	                                   deserunt mollit Anim id est laborum.
+
+
+	*/
 }
 
-/*
-                    lorem ipsum dolor sit amet, Consectetu
-                      elit, sed do eiusmod tempoR incididunt ut l
-                                        dolore mAgna ali
-nostrud exercitation ullamco laboris nisi ut aliQ
-                            ex ea commodo conseqUat. duis aut
-                                               rEprehenderit in voluptate velit esse
-                    eu fugiat nulla pariatur. exCepteu
-                                 cupidatat non pRoident, sunt in culp
-                                deserunt mollit Anim id est laborum.
-
-
-*/
 // TestTIctus ::: Using a specific string, test this function's ability to rotate through each character.
 func TestTIctus(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target Ictus() :::\n")
@@ -118,27 +155,3 @@ func TestTPreus(t *testing.T) {
 		t.Errorf("Rewind failed! %q\n", spineString)
 	}
 }
-
-/*
-
-Ed's pillar test file:
-https://github.com/Everbridge/generate-secure-pillar/blob/main/main_test.go
-
-Interesting structure to try out:
-https://github.com/rs/zerolog/blob/master/log_test.go
-
-func TestMe() {
-	t.Run("empty", func(t *testing.T) {
-		out := &bytes.Buffer{}
-		log := New(out)
-		log.Log().Msg("")
-		if got, want := decodeIfBinaryToString(out.Bytes()), "{}\n"; got != want {
-			t.Errorf("invalid log output:\ngot:  %v\nwant: %v", got, want)
-		}
-	})
-
-	t.Run ...
-
-  }
-
-*/

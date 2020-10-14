@@ -241,27 +241,7 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 	source := subd.Text       // the multi-line source for the Mesostic
 	spine := subd.SpineString // the SpineString for the Mesostic
 
-	// DEBUG ::: fmt.Fprintf(w, "Source:\n%s\nSpine:\n%s\n", source, spine)
-
-	// dump the data to a tmp file
-	// 	this mimics the multi-part upload version
-	// 	placing data in a tmp file is extensible to
-	// 	placing it in a database or other fast storage
-	/*
-		fT := time.Now()
-		fS := fT.Unix()
-		fN := fmt.Sprintf("%s__%d", spine, fS)
-		sB := []byte(source)
-		err := ioutil.WriteFile(fN, sB, 0644)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	*/
-
 	fileName := fileTmp(&spine, &source)
-
-	// mesoMain receives ::: tmp filename, the SpineString, data channel
 	mcMeso := make(chan string)
 	go mesoMain(fileName, spine, mcMeso)
 
@@ -269,13 +249,6 @@ func JSubmit(w http.ResponseWriter, r *http.Request) {
 	showR := <-mcMeso
 	fmt.Println(showR)
 	fmt.Fprintf(w, "%s\n", showR)
-
-	// tmp file deletion should be non-blocking,
-	// but we should know about it, and log it below.
-	var ferr = os.Remove(fileName)
-	if ferr != nil {
-		log.Error()
-	}
 
 	log.Info().
 		Str("host", r.Host).

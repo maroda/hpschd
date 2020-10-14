@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 
@@ -278,4 +279,10 @@ func mesoMain(f string, z string, o chan<- string) {
 	mesostic := strings.Join(fragstack, "")
 	o <- fmt.Sprint(mesostic)
 	close(o)
+
+	// tmp scratch is no longer needed
+	var ferr = os.Remove(f)
+	if ferr != nil {
+		log.Error()
+	}
 }
