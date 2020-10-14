@@ -123,7 +123,7 @@ func TestTfileTmp(t *testing.T) {
 	spine := "cra"
 	source := "que"
 	fileName := fileTmp(&spine, &source)
-	if !strings.HasPrefix(fileName, spine) {
+	if !strings.Contains(fileName, spine) {
 		t.Errorf("Local filename '%s' does not contain '%s'.\n", fileName, spine)
 	}
 

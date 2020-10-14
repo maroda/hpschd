@@ -35,16 +35,18 @@ func main() {
 	}
 
 	// Set up data locations
-	datadirs := []string{"store"}
+	// store ::: ephemeral mesostic cache
+	// txrx ::: tmp scratch files
+	datadirs := []string{"store", "txrx"}
 	localDirs(datadirs)
 
 	// Fetching the NASA APOD for the homepage display is default behavior.
 	// The 'nofetch' flag turns this off.
-	// It does NOT turn off the homepage using any previously stored mesostics.
 	if *nofetch {
 		log.Info().Msg("Running with integrated NASA APOD fetch disabled.")
 	} else {
 		// Start up scheduler for fetching source text to display on the homepage as a Mesostic.
+		// The NASA APOD API has a query limit of 1k/hr, every 15s is 240/hr.
 		go fetchCron(15)
 	}
 
