@@ -120,18 +120,18 @@ func TestTichingMeso(t *testing.T) {
 func TestTfileTmp(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target fileTmp() :::\n")
 
+	// Set up tmp
+	TTdir, err := ioutil.TempDir(".", "txrx")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(TTdir)
+
 	spine := "cra"
 	source := "que"
 	fileName := fileTmp(&spine, &source)
 	if !strings.Contains(fileName, spine) {
 		t.Errorf("Local filename '%s' does not contain '%s'.\n", fileName, spine)
-	}
-
-	// fileTmp does not remove the file because it's used by multiple functions
-	// so that a file removal of the passed filename works fine.
-	var ferr = os.Remove(fileName)
-	if ferr != nil {
-		t.Error(ferr)
 	}
 }
 

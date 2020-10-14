@@ -24,6 +24,20 @@ func TestTmesoMain(t *testing.T) {
 	// There is no automatic filename creation, a known file is used to match.
 	// this test is "failing" because the mesoMain function now *removes* the file it is passed.
 
+	// Set up store
+	TTstore, err := ioutil.TempDir(".", "store")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(TTstore)
+
+	// Set up tmp
+	TTdir, err := ioutil.TempDir(".", "txrx")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(TTdir)
+
 	spine := "craque"
 	sourceFile := "sources/lorenipsum-plaintext.txt"
 	testTmp := "sources/lorenipsum.txt"

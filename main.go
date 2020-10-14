@@ -34,9 +34,12 @@ func main() {
 		log.Info().Msg("Log level set to DEBUG")
 	}
 
-	// Set up data locations
-	// store ::: ephemeral mesostic cache
-	// txrx ::: tmp scratch files
+	/*
+		Confirm / initiate data locations
+
+		store ::: ephemeral mesostic cache
+		txrx ::: tmp scratch files
+	*/
 	datadirs := []string{"store", "txrx"}
 	localDirs(datadirs)
 
