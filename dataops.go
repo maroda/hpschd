@@ -113,6 +113,22 @@ func localDirs(ld []string) {
 	}
 }
 
+// readMesoFile ::: Open and read the Mesostic
+func readMesoFile(f *string) string {
+	if len(*f) == 0 {
+		log.Error().Msg("no path given")
+		return "error"
+	}
+
+	var mesoBuf []byte
+	mesoBuf, err := ioutil.ReadFile(*f)
+	if err != nil {
+		log.Error()
+	}
+
+	return string(mesoBuf)
+}
+
 // apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.
 // The return values are the filename and whether the function wrote a new file.
 func apodNew(sp *string, da *string, me *string) (string, bool) {

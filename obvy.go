@@ -14,21 +14,54 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// Global Prometheus Definitions
-var msgPostCnt = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "mesostic_post_app_total",
-	Help: "Total number of POST me-api requests.",
+/*
+	Global Prometheus Definitions
+	LinearBuckets are defined as: 50 Buckets, 10ms each, starting at 1ms
+*/
+
+// Access Counts
+var hpschdHomeCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "hpschdHomeCount",
+	Help: "Total number of Homepage requests.",
 })
 
-var pingCnt = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "mesostic_ping_total",
+var hpschdPingCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "hpschdPingCount",
 	Help: "Total number of Readiness pings.",
 })
 
-var msgPostDur = prometheus.NewHistogram(prometheus.HistogramOpts{
-	Name: "mesostic_post_app_timer_seconds",
-	Help: "Historgram for the runtime of POST to /app",
-	// 50 Buckets, 10ms each, starting at 1ms
+var hpschdJsubCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "hpschdJsubCount",
+	Help: "Total number of JSON POSTs.",
+})
+
+var hpschdFsubCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "hpschdFsubCount",
+	Help: "Total number of Form POSTs.",
+})
+
+// Function Timers
+var hpschdHomeTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "hpschdHomeTimer",
+	Help:    "Historgram for the runtime of homepage.",
+	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
+})
+
+var hpschdJsubTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "hpschdJsubTimer",
+	Help:    "Historgram for the runtime of jsubmit (JSON).",
+	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
+})
+
+var hpschdFsubTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "hpschdFsubTimer",
+	Help:    "Historgram for the runtime of fsubmit (Form).",
+	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
+})
+
+var hpschdMesolineTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "hpschdMesolineTimer",
+	Help:    "Historgram for the runtime of mesoLine.",
 	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
 })
 

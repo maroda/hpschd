@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/log"
 )
 
@@ -60,6 +61,9 @@ func Spine(z string) []string {
 //		spaces == Pointer ::: current left-aligned whitespace
 //
 func mesoLine(s string, z []string, c int, ict *int, nex *int, spaces *int) bool {
+	hTimer := prometheus.NewTimer(hpschdMesolineTimer)
+	defer hTimer.ObserveDuration()
+
 	var wstack []string // slice for rebuilding the west fragment
 	var estack []string // slice for rebuilding the east fragment
 	var found bool      // the character was found in this line
