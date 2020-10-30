@@ -93,15 +93,25 @@ Not yet in development:
 If no input is active, the running app will reach out to a configured endpoint, scrape a (chance-derived?) amount of text, get a randomized SpineString from a list (probably the same list used for go test), and continuously display different mesostics every indeterminate portion of chance derived windows of time.
 
 
-## I Ching
+## Chance Operations
+
+### Current Implementation
+
+There is a two-phase operation:
+
+1. Under certain conditions the engine will obtain new Mesostics by creating a randomized date string and requesting the APOD from that date.
+2. These are stored locally in the special runtime directory **`store/`**.
+3. When the homepage is requested by a visitor, a random selection from the runtime directory is chosen to display.
+
+### I Ching
 
 There are probably dozens if not hundreds of computer programs that simulate the I Ching.
 
-So this doesn't mean to replicate them but to provide a source of randomness for calculating values of the Mesostic that is in line with the kind of approach Cage might do.
+So this doesn't mean to replicate them but to provide a source of randomness for calculating values of the Mesostic that is in line with the kind of approach Cage might do. For instance:
 
-For instance, the property of how many words per line could be selected via chance operations.
-
-The SS itself could be chance derived.
+- The property of how many words per line could be selected via chance operations.
+- The SS itself could be chance derived.
+- Parameters for if display fonts are ever used.
 
 
 ## Complexity
