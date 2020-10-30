@@ -54,9 +54,14 @@ func main() {
 	}
 
 	// Prometheus
-	prometheus.MustRegister(msgPostCnt)
-	prometheus.MustRegister(msgPostDur)
-	prometheus.MustRegister(pingCnt)
+	prometheus.MustRegister(hpschdHomeCount)
+	prometheus.MustRegister(hpschdPingCount)
+	prometheus.MustRegister(hpschdJsubCount)
+	prometheus.MustRegister(hpschdFsubCount)
+	prometheus.MustRegister(hpschdHomeTimer)
+	prometheus.MustRegister(hpschdJsubTimer)
+	prometheus.MustRegister(hpschdFsubTimer)
+	prometheus.MustRegister(hpschdMesolineTimer)
 
 	// Deploy the web server
 	rt := mux.NewRouter()
