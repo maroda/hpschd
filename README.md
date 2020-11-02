@@ -21,30 +21,22 @@ fox jumped oveR
          the lAzy dog
 ```
 
-### Multi-Part File Upload
-
-Currently the spine string is hardcoded with CRAQUE.
-
-1. Browse to <http://www.hpschd.xyz:9999/upload>
-2. Upload file
-3. Hit button
-
 ### Web Form
 
 Coming soon.
 
-## Operations
+(NB: 'Multi-Part File Upload' was removed in `v1.4.3`.)
 
-*NB*: Currently this service only runs under the **hpschd.xyz** domain so that apex is currently hardwired into the code. This is intentional for now and will become configurable when the code is ready for public domain.
+## Operations
 
 ### Tag a Release
 
-1. Commit, push, merge, and update main as necessary.
+1. Commit, push, merge, and update main as necessary, include the new version in `Dockerfile`.
 2. In main: `git tag vX.Y.Z; git push --tags origin`
 
 ### Container Build for DockerHub
 
-Make sure to update the Dockerfile with the correct version being pushed!
+Once `Dockerfile` contains the new version:
 
 ```zsh
 docker build -t chaquo:hpschd .
@@ -54,15 +46,15 @@ docker push docker.io/maroda/chaquo:hpschd
 
 ### Run Docker Locally
 
+Fetch the `latest` version and run as a local container:
+
 ```
-docker run --rm --name hpschd -p 9999:9999 maroda/chaquo:hpschd_v1.4.0
+docker run --rm --name hpschd -p 9999:9999 maroda/chaquo:hpschd
 ```
 
 ### Running on AWS ECS Fargate
 
-Once the container has been updated in DockerHub, it can be launched/updated on AWS ECS Fargate.
-
-Currently manually configured, Terraform module coming soon.
+Once the container is in the registry it can be launched/updated on AWS ECS Fargate.
 
 ### Updating Fargate
 
@@ -75,23 +67,6 @@ Of course not all mesostics are "writing through" style as Cage did often, they 
 - 50% Mesostic: The CL is unique between itself and the previous CL.
 - 100% Mesostic: The CL is unique between itself, the previous CL, and the next CL.
 - A "meso-acrostic", arguably another version of a Mesostic, has neither of these limitations.
-
-## Display
-
-REST API currently in development.
-
-The idea is a SpineString and Text are submitted via JSON (?) to the API via POST.
-
-The API calls the mesostic stuff, gets a result, and is responsible for displaying.
-
-This is where chance operations can come into play, e.g. changing typeface and sizes.
-
-## Auto-Display
-
-Not yet in development:
-
-If no input is active, the running app will reach out to a configured endpoint, scrape a (chance-derived?) amount of text, get a randomized SpineString from a list (probably the same list used for go test), and continuously display different mesostics every indeterminate portion of chance derived windows of time.
-
 
 ## Chance Operations
 
