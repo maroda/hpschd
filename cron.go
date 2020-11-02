@@ -7,12 +7,12 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,9 +39,14 @@ func fetchCron(ffs uint64) {
 // process it through the Mesostic engine, save it in a library of ephemeral copies,
 // pass the new data point (filename path) to a channel for use with displays.
 func NASAetl(url string) {
+	hTimer := prometheus.NewTimer(hpschdNASAetlTimer)
+	defer hTimer.ObserveDuration()
+
 	_, _, fu := Envelope()
 
-	fmt.Println("NASAetl Running")
+	log.Info().
+		Str("fu", fu).
+		Msg("NASA APOD Mesostic Begin")
 
 	// the title as the spine, for now :)
 	date, spine, source := fetchSource(url)
@@ -107,17 +112,15 @@ func NASAetl(url string) {
 	nasaNewMESO <- mesoFile
 
 	log.Info().
-		Str("fu", fu).
-		Str("date", date).
 		Str("spinestring", spine).
 		Str("filename", mesoFile).
-		Msg("NASA APOD Mesostic complete")
+		Msg("NASA APOD Mesostic End")
 
 	log.Debug().
 		Str("fu", fu).
-		Str("date", date).
+		Str("fetchdate", date).
 		Str("spinestring", spine).
 		Str("filename", mesoFile).
 		Str("mesostic", showR).
-		Msg("NASA APOD Mesostic complete")
+		Msg("NASA APOD Mesostic End")
 }

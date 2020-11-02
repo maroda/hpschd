@@ -20,24 +20,9 @@ import (
 */
 
 // Access Counts
-var hpschdHomeCount = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "hpschdHomeCount",
-	Help: "Total number of Homepage requests.",
-})
-
 var hpschdPingCount = prometheus.NewCounter(prometheus.CounterOpts{
 	Name: "hpschdPingCount",
 	Help: "Total number of Readiness pings.",
-})
-
-var hpschdJsubCount = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "hpschdJsubCount",
-	Help: "Total number of JSON POSTs.",
-})
-
-var hpschdFsubCount = prometheus.NewCounter(prometheus.CounterOpts{
-	Name: "hpschdFsubCount",
-	Help: "Total number of Form POSTs.",
 })
 
 // Function Timers
@@ -62,6 +47,12 @@ var hpschdFsubTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
 var hpschdMesolineTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
 	Name:    "hpschdMesolineTimer",
 	Help:    "Historgram for the runtime of mesoLine.",
+	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
+})
+
+var hpschdNASAetlTimer = prometheus.NewHistogram(prometheus.HistogramOpts{
+	Name:    "hpschdNASAetlTimer",
+	Help:    "Historgram for the runtime of NASAetl.",
 	Buckets: prometheus.LinearBuckets(0.001, 0.01, 50),
 })
 

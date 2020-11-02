@@ -50,7 +50,6 @@ type MesoPrint struct {
 }
 
 func homepage(w http.ResponseWriter, r *http.Request) {
-	hpschdHomeCount.Add(1)
 	hTimer := prometheus.NewTimer(hpschdHomeTimer)
 	defer hTimer.ObserveDuration()
 	_, _, fu := Envelope()
@@ -115,7 +114,6 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 
 // FSubmit ::: POST Method form submission.
 func FSubmit(w http.ResponseWriter, r *http.Request) {
-	hpschdFsubCount.Add(1)
 	hTimer := prometheus.NewTimer(hpschdFsubTimer)
 	defer hTimer.ObserveDuration()
 
@@ -145,7 +143,6 @@ func FSubmit(w http.ResponseWriter, r *http.Request) {
 
 // JSubmit ::: POST Method JSON submission.
 func JSubmit(w http.ResponseWriter, r *http.Request) {
-	hpschdJsubCount.Add(1)
 	hTimer := prometheus.NewTimer(hpschdJsubTimer)
 	defer hTimer.ObserveDuration()
 
