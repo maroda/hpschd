@@ -9,16 +9,16 @@ A text file for input will be transmogrified into a piece of Mesostic poetry usi
 ### JSON API
 
 ```zsh
-curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
+curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumps over\nthe lazy dog\n", "spinestring": "cra"}'
 ```
 
 For example:
 
 ```zsh
->>> curl localhost:9999/app -d '{"text": "the quick brown\nfox jumped over\nthe lazy dog\n", "spinestring": "cra"}'
-       the quiCk b
-fox jumped oveR
-         the lAzy dog
+>>> curl localhost:9999/app -d '{"text": "the quick brown\nfox jumps over\nthe lazy dog\n", "spinestring": "cra"}'
+      the quiCk b
+fox jumps oveR
+        the lAzy dog
 ```
 
 ### Web Form
@@ -43,6 +43,10 @@ docker build -t chaquo:hpschd .
 docker tag chaquo:hpschd docker.io/maroda/chaquo:hpschd
 docker push docker.io/maroda/chaquo:hpschd
 ```
+
+### Continuous Build for DockerHub
+
+Currently testing continuous registry publication with hub.docker.com + github.
 
 ### Run Docker Locally
 
