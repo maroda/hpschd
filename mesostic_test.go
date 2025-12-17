@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -25,14 +24,14 @@ func TestTmesoMain(t *testing.T) {
 	// this test is "failing" because the mesoMain function now *removes* the file it is passed.
 
 	// Set up store
-	TTstore, err := ioutil.TempDir(".", "store")
+	TTstore, err := os.MkdirTemp(".", "store")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(TTstore)
 
 	// Set up tmp
-	TTdir, err := ioutil.TempDir(".", "txrx")
+	TTdir, err := os.MkdirTemp(".", "txrx")
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,16 +39,22 @@ func TestTmesoMain(t *testing.T) {
 
 	spine := "craque"
 	sourceFile := "sources/lorenipsum-plaintext.txt"
-	testTmp := "sources/lorenipsum.txt"
 
 	// simulate reading an input source
-	bRead, berr := ioutil.ReadFile(sourceFile)
+	bRead, berr := os.ReadFile(sourceFile)
 	if berr != nil {
 		t.Error(berr)
 	}
 
-	// write a scratch tmp file, which mesoMain removes
-	werr := ioutil.WriteFile(testTmp, bRead, 0644)
+	// write a scratch tmp file in the test temp directory, which mesoMain removes
+	TTfile, err := os.CreateTemp(TTdir, "lorenipsum_*.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	testTmp := TTfile.Name()
+	TTfile.Close()
+
+	werr := os.WriteFile(testTmp, bRead, 0644)
 	if werr != nil {
 		t.Error(werr)
 	}
@@ -64,7 +69,7 @@ func TestTmesoMain(t *testing.T) {
 
 	// check if mesoMain removed the scratch tmp correctly
 	if _, lserr := os.Stat(testTmp); lserr == nil {
-		t.Error(lserr)
+		t.Errorf("mesoMain() did not remove temp file '%s' as expected", testTmp)
 	}
 
 	/*

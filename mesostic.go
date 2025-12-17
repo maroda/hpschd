@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -213,13 +212,16 @@ func mesoMain(f string, z string, o chan<- string) {
 	var nexus int = ictus + 1 // Next SpineString character address
 	var spaces int = 0        // Left-aligned whitespace for all lines
 
+	// Reset global counter to ensure clean state for each invocation
+	fragCount = 0
+
 	// split the SpineString into a slice of characters
 	spineChars := Spine(z)
 
 	spineString := strings.Join(spineChars, "")
 	// DEBUG ::: fmt.Sprint(spineString)
 
-	source, err := ioutil.ReadFile(f)
+	source, err := os.ReadFile(f)
 	if err != nil {
 		log.Error()
 	}
@@ -281,12 +283,13 @@ func mesoMain(f string, z string, o chan<- string) {
 		fragstack = append(fragstack, "\n")
 	}
 	mesostic := strings.Join(fragstack, "")
-	o <- fmt.Sprint(mesostic)
-	close(o)
 
-	// tmp scratch is no longer needed
+	// Remove tmp scratch before sending result to ensure cleanup completes
 	var ferr = os.Remove(f)
 	if ferr != nil {
 		log.Error()
 	}
+
+	o <- fmt.Sprint(mesostic)
+	close(o)
 }

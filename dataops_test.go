@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,13 +71,13 @@ func TestTdirents(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target dirents() :::\n")
 
 	// Set up tmp
-	TTdir, err := ioutil.TempDir(".", "TT")
+	TTdir, err := os.MkdirTemp(".", "TT")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(TTdir)
 
-	TTfile, err := ioutil.TempFile(TTdir, "")
+	TTfile, err := os.CreateTemp(TTdir, "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,8 +85,8 @@ func TestTdirents(t *testing.T) {
 
 	// Call dirents()
 	for _, entry := range dirents(TTdir) {
-		pathENT := filepath.Join(TTdir, entry.Name())
-		pathTT := TTfile.Name()
+		pathENT := filepath.Clean(filepath.Join(TTdir, entry.Name()))
+		pathTT := filepath.Clean(TTfile.Name())
 		if pathENT != pathTT {
 			t.Errorf("Local file '%s' does NOT match created file '%s'.\n", pathENT, pathTT)
 		}
@@ -99,13 +98,13 @@ func TestTichingMeso(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target ichingMeso() :::\n")
 
 	// Set up tmp
-	TTdir, err := ioutil.TempDir(".", "TT")
+	TTdir, err := os.MkdirTemp(".", "TT")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(TTdir)
 
-	TTfile, err := ioutil.TempFile(TTdir, "")
+	TTfile, err := os.CreateTemp(TTdir, "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -121,7 +120,7 @@ func TestTfileTmp(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target fileTmp() :::\n")
 
 	// Set up tmp
-	TTdir, err := ioutil.TempDir(".", "txrx")
+	TTdir, err := os.MkdirTemp(".", "txrx")
 	if err != nil {
 		t.Error(err)
 	}

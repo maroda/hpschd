@@ -8,7 +8,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -67,7 +67,7 @@ func fetchSource(u string) (string, string, string) {
 		defer result.Body.Close()
 	}
 
-	body, readErr := ioutil.ReadAll(result.Body)
+	body, readErr := io.ReadAll(result.Body)
 	if readErr != nil {
 		log.Error().
 			Str("fu", fu).
@@ -114,6 +114,7 @@ func fetchSource(u string) (string, string, string) {
 func fetchRandURL() string {
 	salt := time.Now().Unix()
 	date := rndDate(salt)
-	url := "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+	apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
+	url := "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=" + apiKey
 	return url
 }

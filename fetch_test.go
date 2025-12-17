@@ -20,7 +20,7 @@ func TestTFetchSource(t *testing.T) {
 	// Remove this if normal logging from the called fuction is needed.
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 
-	url := "https://api.nasa.gov/planetary/apod?date=2000-01-01&api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
+	url := "https://api.nasa.gov/planetary/apod?date=2000-01-01&api_key=DEMO_KEY"
 	matchDate := "2000-01-01"
 	matchTitle := "The Millennium that Defines Universe"
 

@@ -48,6 +48,14 @@ func main() {
 	if *nofetch {
 		log.Info().Msg("Running with integrated NASA APOD fetch disabled.")
 	} else {
+		// Fetch initial APOD mesostic to populate store before starting web server
+		// This prevents ENOENT errors when users visit homepage before cronjob runs
+		apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
+		apodURL := "https://api.nasa.gov/planetary/apod?api_key=" + apiKey
+		log.Info().Msg("Fetching initial NASA APOD mesostic...")
+		NASAetl(apodURL)
+		log.Info().Msg("Initial mesostic created, starting cronjob.")
+
 		// Start up scheduler for fetching source text to display on the homepage as a Mesostic.
 		// The NASA APOD API has a query limit of 1k/hr, every 15s is 240/hr.
 		// There is a possible retry bug here...

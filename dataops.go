@@ -13,7 +13,7 @@ package main
 import (
 	"crypto/sha1"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -83,8 +83,8 @@ func ichingMeso(dir string) string {
 }
 
 // dirents ::: read a directory and return its contents
-func dirents(d string) []os.FileInfo {
-	ents, err := ioutil.ReadDir(d)
+func dirents(d string) []fs.DirEntry {
+	ents, err := os.ReadDir(d)
 	if err != nil {
 		log.Error()
 		return nil
@@ -121,7 +121,7 @@ func readMesoFile(f *string) string {
 	}
 
 	var mesoBuf []byte
-	mesoBuf, err := ioutil.ReadFile(*f)
+	mesoBuf, err := os.ReadFile(*f)
 	if err != nil {
 		log.Error()
 	}
@@ -153,7 +153,7 @@ func apodNew(sp *string, da *string, me *string) (string, bool) {
 
 	// Write data to a new file
 	sB := []byte(*me)
-	err := ioutil.WriteFile(fP, sB, 0644)
+	err := os.WriteFile(fP, sB, 0644)
 	if err != nil {
 		log.Error()
 	}
@@ -168,7 +168,7 @@ func fileTmp(sp *string, so *string) string {
 	fS := fT.Unix()
 	fN := fmt.Sprintf("txrx/%s__%d", *sp, fS)
 	sB := []byte(*so)
-	err := ioutil.WriteFile(fN, sB, 0644)
+	err := os.WriteFile(fN, sB, 0644)
 	if err != nil {
 		log.Error()
 	}

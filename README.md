@@ -31,12 +31,10 @@ Coming soon.
 
 ### Tag a Release
 
-1. Commit, push, merge, and update main as necessary, include the new version in `Dockerfile`.
+1. Commit, push, merge, and update main as necessary.
 2. In main: `git tag vX.Y.Z; git push --tags origin`
 
 ### Container Build for DockerHub
-
-Once `Dockerfile` contains the new version:
 
 ```zsh
 docker build -t chaquo:hpschd .

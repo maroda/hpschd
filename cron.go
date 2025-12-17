@@ -17,13 +17,15 @@ import (
 )
 
 // Channel for NASAapod Mesostic publishing
-var nasaNewMESO = make(chan string)
+// Buffered with capacity 1 to prevent blocking on initial startup fetch
+var nasaNewMESO = make(chan string, 1)
 
 // fetchCron ::: Cron emulator, currently just a single job. ffs == fetch frequency in seconds
 func fetchCron(ffs uint64) {
-	// NASA official Astronomy Picture of the Day endpoint URL using a freely available API key
-	apodnow := "https://api.nasa.gov/planetary/apod?api_key=Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu"
-	apodenv := "HPSCHD_NASA_APOD_URL" // Optional ENV VAR
+	// NASA official Astronomy Picture of the Day endpoint URL using NASA's demo API key
+	apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
+	apodnow := "https://api.nasa.gov/planetary/apod?api_key=" + apiKey
+	apodenv := "HPSCHD_NASA_APOD_URL" // Optional ENV VAR for full URL override
 	url := envVar(apodenv, apodnow)   // NASA APOD URL to query, default if no ENV VAR
 
 	// Start a new fetch job immediately, followed every ffs seconds.

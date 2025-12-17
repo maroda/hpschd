@@ -1,3 +1,16 @@
+# local files
 /store/
 /txrx/
+.env
+hpschd
+go.sum
+
+# ctags file
+c.out
+tags
+
+# macOS
 .DS_Store
+
+# goreleaser
+dist/
