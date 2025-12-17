@@ -53,6 +53,7 @@ dockers:
     dockerfile: Dockerfile
     extra_files:
       - go.mod
+      - public/
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
@@ -69,6 +70,7 @@ dockers:
     dockerfile: Dockerfile
     extra_files:
       - go.mod
+      - public/
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
