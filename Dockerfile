@@ -1,9 +1,8 @@
-FROM golang:1.25.4-alpine
+FROM alpine:latest
 LABEL vendor="Sounding"
+LABEL app=hpschd
+LABEL org.opencontainers.image.source=https://github.com/maroda/hpschd
+WORKDIR /app
+COPY hpschd .
 EXPOSE 9999
-WORKDIR /go/src/hpschd/
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN go build -o /bin/hpschd
-ENTRYPOINT ["/bin/hpschd"]
+CMD ["./hpschd"]
