@@ -3,7 +3,6 @@
 /txrx/
 .env
 hpschd
-go.sum
 
 # ctags file
 c.out

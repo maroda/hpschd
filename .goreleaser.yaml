@@ -1,0 +1,105 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: linux
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+  - id: docker
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: linux
+    builds:
+      - linux
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+
+# Docker images for GitHub Container Registry
+dockers:
+  - ids:
+      - docker
+    image_templates:
+      - "ghcr.io/maroda/hpschd:{{ .Version }}-amd64"
+      - "ghcr.io/maroda/hpschd:latest-amd64"
+    use: buildx
+    dockerfile: Dockerfile
+    extra_files:
+      - go.mod
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source=https://github.com/maroda/hpschd"
+
+  - ids:
+      - docker
+    image_templates:
+      - "ghcr.io/maroda/hpschd:{{ .Version }}-arm64"
+      - "ghcr.io/maroda/hpschd:latest-arm64"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile
+    extra_files:
+      - go.mod
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source=https://github.com/maroda/hpschd"
+
+# Multi-arch manifest
+docker_manifests:
+  - name_template: "ghcr.io/maroda/hpschd:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/maroda/hpschd:{{ .Version }}-amd64"
+      - "ghcr.io/maroda/hpschd:{{ .Version }}-arm64"
+
+  - name_template: "ghcr.io/maroda/hpschd:latest"
+    image_templates:
+      - "ghcr.io/maroda/hpschd:latest-amd64"
+      - "ghcr.io/maroda/hpschd:latest-arm64"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: maroda
+    name: hpschd
+  draft: true
+  mode: append
+  footer: >-
+    ---
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
