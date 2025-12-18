@@ -1,0 +1,40 @@
+# Dockerfile.local - Multi-stage build for local development and testing
+# This builds the Go binary inside the container, unlike the production
+# Dockerfile which expects goreleaser to build the binary externally.
+
+# Build stage
+FROM golang:1.25-alpine AS builder
+
+LABEL vendor="Sounding"
+LABEL app=hpschd
+LABEL org.opencontainers.image.source=https://github.com/maroda/hpschd
+
+WORKDIR /build
+
+# Copy go mod files first for better layer caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the binary
+# CGO_ENABLED=0 for a fully static binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o hpschd .
+
+# Runtime stage
+FROM alpine:latest
+
+WORKDIR /app
+
+# Copy the binary from builder
+COPY --from=builder /build/hpschd .
+
+# Copy public directory
+COPY public/ ./public/
+
+# Expose the application port
+EXPOSE 9999
+
+# Run the application
+CMD ["./hpschd"]

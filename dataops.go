@@ -14,7 +14,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +24,7 @@ import (
 )
 
 // rndDate ::: Produce a random date in the format YYYY-MM-DD.
+// Note: salt parameter is unused with math/rand/v2 (auto-seeded), kept for API compatibility.
 func rndDate(salt int64) string {
 
 	// rand ranges are [0,r)
@@ -32,22 +33,20 @@ func rndDate(salt int64) string {
 	rMo := 12 // Months
 	rDy := 31 // Days
 
-	rand.Seed(salt)
-
 	// No random for millinium
 	Mi := fmt.Sprint(rMi)
 
 	// Yr can be zero
-	Yr := fmt.Sprintf("%02d", rand.Intn(rYr))
+	Yr := fmt.Sprintf("%02d", rand.IntN(rYr))
 
 	// Don't actually use the last number but then add it back.
-	Mo := fmt.Sprintf("%02d", rand.Intn(rMo-1)+1)
+	Mo := fmt.Sprintf("%02d", rand.IntN(rMo-1)+1)
 
 	// Good thing for a test:
 	// 	In rare cases this may be > 31,
 	// 	but the API should return a 404
 	// 	and that will trigger another random selection anyway.
-	Dy := fmt.Sprintf("%02d", rand.Intn(rDy)+1)
+	Dy := fmt.Sprintf("%02d", rand.IntN(rDy)+1)
 
 	// Formatted YYYY-MM-DD date
 	newdate := Mi + Yr + "-" + Mo + "-" + Dy
@@ -77,8 +76,7 @@ func ichingMeso(dir string) string {
 		return "ENOENT"
 	}
 
-	rand.Seed(time.Now().Unix())
-	randix := rand.Intn(len(fileList))
+	randix := rand.IntN(len(fileList))
 	return fileList[randix]
 }
 

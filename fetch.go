@@ -112,7 +112,7 @@ func fetchSource(u string) (string, string, string) {
 
 // fetchRandURL ::: Returns a constructed string using a random date for the NASA APOD API query.
 func fetchRandURL() string {
-	salt := time.Now().Unix()
+	salt := time.Now().UnixNano()
 	date := rndDate(salt)
 	apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
 	url := "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=" + apiKey

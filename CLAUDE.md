@@ -94,16 +94,31 @@ go test -v -run TestFunctionName
 
 ### Docker
 
+Images are published to GitHub Container Registry (ghcr.io) with semantic versioning.
+
 ```bash
-# Build container
-docker build -t chaquo:hpschd .
+# Build container for LOCAL TESTING (builds binary inside container)
+docker build -f Dockerfile.local -t hpschd:latest .
 
 # Run locally
-docker run --rm --name hpschd -p 9999:9999 maroda/chaquo:hpschd
+docker run --rm --name hpschd -p 9999:9999 hpschd:latest
 
-# Tag and push to DockerHub
-docker tag chaquo:hpschd docker.io/maroda/chaquo:hpschd
-docker push docker.io/maroda/chaquo:hpschd
+# Optional: Mount volume for persistent store/ directory
+docker run --rm --name hpschd -p 9999:9999 -v hpschd-store:/app/store hpschd:latest
+
+# Run published image from GitHub Container Registry
+docker run --rm --name hpschd -p 9999:9999 ghcr.io/maroda/hpschd:latest
+docker run --rm --name hpschd -p 9999:9999 ghcr.io/maroda/hpschd:v1.2.3  # specific version
+
+# Production build (requires goreleaser to build binary first)
+# This is automated by CI/CD on git tag push
+docker build -t ghcr.io/maroda/hpschd:latest .
+
+# Manual tag and push to GitHub Container Registry
+docker tag hpschd:latest ghcr.io/maroda/hpschd:v1.2.3
+docker tag hpschd:latest ghcr.io/maroda/hpschd:latest
+docker push ghcr.io/maroda/hpschd:v1.2.3
+docker push ghcr.io/maroda/hpschd:latest
 ```
 
 ### Testing the API
@@ -156,7 +171,11 @@ curl localhost:9999/metrics
 
 ## Release Process
 
+Releases are automated via goreleaser when tags are pushed.
+
 1. Commit, push, merge to main
-2. Tag release: `git tag vX.Y.Z && git push --tags origin`
-3. Build and push Docker image (see Docker commands above)
-4. Update AWS ECS Fargate task **mesostic** with new revision on **hpschd-mesostic** cluster
+2. Tag release with semantic version: `git tag vX.Y.Z && git push origin vX.Y.Z`
+3. CI/CD automatically builds and pushes Docker images to GitHub Container Registry:
+   - `ghcr.io/maroda/hpschd:vX.Y.Z` (specific version)
+   - `ghcr.io/maroda/hpschd:latest` (updated on each release)
+4. Update AWS ECS Fargate task **mesostic** with new image revision on **hpschd-mesostic** cluster
