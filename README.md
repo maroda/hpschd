@@ -5,14 +5,11 @@
 **The Writing-Through Mesostic Generator**
 
 A text file for input will be transmogrified into a piece of Mesostic poetry using a configured "Spine String".
-This algorithm was written by a human (me), but the "way to write a Mesostic" was originated by **John Cage**.
-
-> Claude Code has been used to assist with testing and refactoring.
 
 ## Usage
 
-The default webserver shows a mesostic built from fetches made to the NASA Astronomy Picture of the Day (APOD) API.
-This uses the same API endpoint that can be used for any blob of text.
+The default webserver shows a mesostic built from fetches made to the [NASA Astronomy Picture of the Day (APOD)](https://apod.nasa.gov/apod/) API.
+This uses the following API endpoint, which can be used for any blob of text.
 
 ### JSON API
 
@@ -30,18 +27,38 @@ fox jumps oveR
 ```
 
 ## Operations
+
+To run this and display a Mesostic on the homepage, you will need an APOD API Key.
+Visit [NASA's API pages](https://api.nasa.gov) to sign up and get a free key.
+
 ### Run Docker Locally
 
-Set your APOD API key in the environment.
+First set your APOD API key in the environment. If this is not set, it will default to NASA's test key: `DEMO_KEY`
+
+```zsh
+export NASA_API_KEY=<KEY>
+```
 
 Fetch the `latest` version from GitHub Container Registry and run as a local container:
 ```zsh
 docker run --rm --name hpschd -p 9999:9999 ghcr.io/maroda/hpschd:latest
 ```
 
-Or run a specific version:
-```zsh
-docker run --rm --name hpschd -p 9999:9999 ghcr.io/maroda/hpschd:v1.5.0
+Now browse to <http://localhost:9999> and see an APOD mesostic!
+
+### Docker Compose
+
+Use `docker compose up` with the following `compose.yaml` entry:
+```yaml
+services:
+  hpschd:
+    image: ghcr.io/maroda/hpschd:latest
+    container_name: hpschd
+    ports:
+      - "9999:9999"
+    environment:
+      - NASA_API_KEY=<KEY>
+  restart: unless-stopped
 ```
 
 ### Release Process
@@ -66,23 +83,23 @@ See the [Release workflow](.github/workflows/release.yml) and [GoReleaser config
 ## Mesostics
 
 An acrostic shows a String of letters down one side of the text.
-A mesostic shows a String of letters down the middle of the text.
-Usually this vertical line of text is capitalized, here we'll call that a Spine String.
+A **mesostic** shows a String of letters down the _middle_ of the text.
 
-Locating which letter in a line of text to center on the Spine String comes in three forms:
+This vertical line of text is capitalized and centered, so we call that a _Spine String_.
+Locating which letter in a line of entry-text to center on the Spine String happens using one of three algorithms:
 
-1. 50% Mesostic: The Spine String Letter is unique between itself and the previous one. So if this letter is K, there cannot be a K between itself and the previous letter (which also would not be a K).
-2. 100% Mesostic: The Spine String Letter is unique between itself, the previous one, and the next one. In the example, the letter K cannot exist before _or after_ itself between its partner letters.
-3. A "meso-acrostic", arguably another version of a Mesostic, has neither of these limitations.
+1. **50% Mesostic**: The Spine String Letter is unique between itself and the previous one. So if this letter is K, there cannot be a K between itself and the previous letter (which also would not be a K).
+2. **100% Mesostic**: The Spine String Letter is unique between itself, the previous one, and the next one. In the example, the letter K cannot exist before _or after_ itself between its partner letters.
+3. **A "meso-acrostic"**: Neither of these limitations.
 
-John Cage would run large amounts of text through the Mesostic algorithm to create poetry.
-The original text forms the lines of poetry and the Spine String (my term) forms the vertical letters down the middle.
+John Cage would run large amounts of text through a Mesostic algorithm to create poetry.
+The entry-text forms the lines of poetry and the Spine String (our term) forms the vertical letters down the middle.
 
-> The **50% Mesostic** is what _hpschd_ displays by default.
+> The **50% Mesostic** is what _hpschd_ uses to produce the most output from small blocks of text, like the APOD descriptions.
+> 
 > The algorithm is fuzzy and can lead to characters causing weird shifts, very long lines, or empty space.
+>
 > This is intentional.
-
-See also the Wikipedia page on [Mesostic](https://en.wikipedia.org/wiki/Mesostic)
 
 ## Chance Operations
 There is a two-phase operation:
@@ -100,3 +117,9 @@ Mesostic creation algorithms in the wild!
 
 - Nicki Hoffman (python) ::: http://vyh.pythonanywhere.com/psmeso/
 - UPenn team (javascript) ::: http://mesostics.sas.upenn.edu/
+
+## Acknowledgements
+
+This algorithm was written by a human (me), but the "way to write a Mesostic" was mostly work by **John Cage**.
+Claude Code has been used to assist with testing and refactoring.
+
