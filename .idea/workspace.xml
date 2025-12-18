@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="goreleaser Dockerfile">
-      <change beforePath="$PROJECT_DIR$/.goreleaser.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.goreleaser.yaml" afterDir="false" />
+    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="goreleaser public dir">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,7 +163,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="deploy actions" />
     <MESSAGE value="goreleaser Dockerfile" />
-    <option name="LAST_COMMIT_MESSAGE" value="goreleaser Dockerfile" />
+    <MESSAGE value="goreleaser public dir" />
+    <option name="LAST_COMMIT_MESSAGE" value="goreleaser public dir" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
