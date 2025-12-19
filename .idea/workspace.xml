@@ -4,12 +4,14 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="container race condition fix">
+    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="cron changed to ticker">
+      <change afterPath="$PROJECT_DIR$/mesosys.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mesosys_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cron.go" beforeDir="false" afterPath="$PROJECT_DIR$/cron.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fetch.go" beforeDir="false" afterPath="$PROJECT_DIR$/fetch.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fetch_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/fetch_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesostic.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesostic.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,11 +22,17 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="GitHub Workflow" />
+        <option value="Go File" />
       </list>
     </option>
   </component>
   <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -46,6 +54,9 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="2pdakFzWE0rdkA2x8RLcyRugudl" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -54,10 +65,13 @@
   "keyToString": {
     "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultGoTemplateProperty": "Go File",
     "Go Build.go build github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestMesoMain in github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestMesostic_ParseLine in github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestTlocalDirs in dataops_test.go.executor": "Run",
-    "Go Test.go test hpschd.executor": "Run",
+    "Go Test.go test hpschd.executor": "Coverage",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
@@ -68,7 +82,7 @@
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "mesosys-data",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/Users/matt",
@@ -79,7 +93,7 @@
     "settings.editor.selected.configurable": "configurable.group.editor"
   }
 }]]></component>
-  <component name="RunManager" selected="Go Build.go build github.com/maroda/hpschd">
+  <component name="RunManager" selected="Go Test.TestMesostic_ParseLine in github.com/maroda/hpschd">
     <configuration name="go build github.com/maroda/hpschd" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -123,6 +137,28 @@
       <pattern value="^\QTestMesoMain\E$" />
       <method v="2" />
     </configuration>
+    <configuration name="TestMesostic_ParseLine in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hpschd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/maroda/hpschd" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestMesostic_ParseLine\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestMesostic_ParseSpine in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hpschd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/maroda/hpschd" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestMesostic_ParseSpine\E$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestTlocalDirs in dataops_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -156,11 +192,15 @@
     <list>
       <item itemvalue="Go Build.go build github.com/maroda/hpschd" />
       <item itemvalue="Go Test.go test hpschd" />
+      <item itemvalue="Go Test.TestMesostic_ParseLine in github.com/maroda/hpschd" />
+      <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestTlocalDirs in dataops_test.go" />
       <item itemvalue="Go Test.TestMesoMain in github.com/maroda/hpschd" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestMesostic_ParseLine in github.com/maroda/hpschd" />
+        <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestTlocalDirs in dataops_test.go" />
         <item itemvalue="Go Test.TestMesoMain in github.com/maroda/hpschd" />
       </list>
@@ -196,12 +236,13 @@
     <MESSAGE value="Dockerfile public dir" />
     <MESSAGE value="doc corrections" />
     <MESSAGE value="container race condition fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="container race condition fix" />
+    <MESSAGE value="cron changed to ticker" />
+    <option name="LAST_COMMIT_MESSAGE" value="cron changed to ticker" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1765949984207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1766104835092" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

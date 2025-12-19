@@ -37,6 +37,7 @@ var fragMents = make(map[string]LineFrag)
 var fragCount int // global to count total fragment combinations (i.e. lines)
 
 // Spine ::: Process the SpineString
+//
 //	Construct a slice of lowercase SpineString characters that can be rotated by Ictus().
 func Spine(z string) []string {
 	var zch []string
@@ -52,13 +53,12 @@ func Spine(z string) []string {
 // The West Fragment is everything to the left of the SpineString character.
 // The East Fragment is everything to the right of the SpineString character.
 //
-//		s == the current line to process
-//		z == slice of SpineString characters
-//		c == line number
-//		ict == ictus of the SpineString characters
-//		nex == next ictus (not always ict + 1)
-//		spaces == Pointer ::: current left-aligned whitespace
-//
+//	s == the current line to process
+//	z == slice of SpineString characters
+//	c == line number
+//	ict == ictus of the SpineString characters
+//	nex == next ictus (not always ict + 1)
+//	spaces == Pointer ::: current left-aligned whitespace
 func mesoLine(s string, z []string, c int, ict *int, nex *int, spaces *int) bool {
 	hTimer := prometheus.NewTimer(hpschdMesolineTimer)
 	defer hTimer.ObserveDuration()
@@ -147,10 +147,9 @@ CharLoop:
 
 // Ictus ::: Enables the rotation of SpineString characters by operating on the index.
 //
-//			lss == length of SpineString
-//			isp == pointer to the ictus
-//			nsp == pointer to the next ictus
-//
+//	lss == length of SpineString
+//	isp == pointer to the ictus
+//	nsp == pointer to the next ictus
 func Ictus(lss int, isp *int, nsp *int) {
 	// a mesostic line has been finished,
 	// increase ictus, i.e. the current character position
@@ -198,6 +197,7 @@ func (ls LineFrags) Less(i, j int) bool {
 }
 
 // mesoMain ::: Takes a filename as input for processing.
+//
 //	Alternate main()
 //	TODO: only launch the api if a "server" flag is given.
 //			Otherwise, it's a standalone CLI tool.
@@ -205,7 +205,6 @@ func (ls LineFrags) Less(i, j int) bool {
 // f == filename for processing
 // z == Spine String
 // o == channel for return
-//
 func mesoMain(f string, z string, o chan<- string) {
 	var lnc int               // line counts for the Index
 	var ictus int             // SpineString character address

@@ -32,16 +32,19 @@ A Mesostic is a form of poetry where a "spine string" runs vertically through th
    - `/metrics`: Prometheus metrics endpoint
 
 3. **NASA APOD Integration** (`cron.go`, `fetch.go`): Automated content generation
-   - Cron job (`fetchCron()`) runs every 666 seconds by default
+   - Ticker (`fetchTicker()`) runs periodically using `time.Ticker` from standard library
+   - Interval configurable via `HPSCHD_TIMER` env var (default: 77 seconds)
    - Fetches NASA Astronomy Picture of the Day metadata via API
    - Uses title as spine string, explanation text as source material
    - Stores generated mesostics in `store/` directory
-   - If current date unavailable (404) or mesostic exists, triggers randomized date fetch
+   - If current date unavailable (404), waits for next ticker interval
+   - If mesostic already exists, triggers randomized date fetch to populate store
    - Uses buffered channel `nasaNewMESO` to communicate new mesostic availability
 
 4. **Data Operations** (`dataops.go`): Filesystem and utilities
-   - `ichingMeso()`: Chance-based selection of existing mesostics
-   - `rndDate()`: Generates random dates (2000-2020 range) for APOD queries
+   - `ichingMeso()`: Chance-based selection of existing mesostics using `math/rand/v2`
+   - `rndDate()`: Generates random dates (2000-2020 range) for APOD queries using `math/rand/v2`
+   - `fetchRandURL()`: Creates random date URLs using nanosecond-precision seeding
    - `fileTmp()`: Creates temporary files in `txrx/` for processing
    - `apodNew()`: Writes mesostics to `store/` with deduplication
 
@@ -147,27 +150,32 @@ curl localhost:9999/metrics
 - `nasaNewMESO`: Buffered channel (capacity 1) for communicating new NASA mesostic filenames
   - Buffered to prevent deadlock during synchronous initial startup fetch
 
-### NASA APOD Cronjob Timing
-- Default: 666 seconds (~11 minutes)
-- Rationale: Avoids API rate limits (1k/hr), prevents "EXISTENT" mesostic pileup from fast fetches
+### NASA APOD Ticker Timing
+- Default: 77 seconds (configurable via `HPSCHD_TIMER` env var)
+- Uses `time.Ticker` from standard library (no external scheduler dependency)
+- Rationale: Fast enough to keep store populated, slow enough to avoid API rate limits (1k/hr)
+- 404 responses: Waits for next ticker interval instead of recursive retries
+- EXISTENT files: Triggers randomized historical date fetch to populate store diversity
 - TODO noted in code: Check for existing mesostics BEFORE generating (currently generates then checks)
 
 ### Concurrency Patterns
 - `mesoMain()` runs in goroutine, returns results via channel
-- NASA ETL triggers recursive randomized fetches on 404 or duplicate detection
+- `fetchTicker()` runs in dedicated goroutine, triggers `NASAetl()` on each tick
+- NASA ETL triggers recursive randomized fetches only on duplicate detection (EXISTENT), not on 404
 - Homepage reads from `nasaNewMESO` channel with non-blocking select (returns "HPSCHD" signal when empty)
+- Random number generation uses `math/rand/v2` with automatic seeding (thread-safe, no manual seed management)
 
 ### Startup Sequence
 - On startup (unless `-nofetch` flag is used), app synchronously fetches one NASA APOD mesostic before starting the web server
 - This ensures `store/` directory is populated and prevents ENOENT errors on first homepage load
-- After initial fetch completes, the cronjob scheduler starts for subsequent fetches
-- If initial fetch fails (404 or network error), `NASAetl()` recursively tries a random historical date
+- After initial fetch completes, the ticker goroutine starts for subsequent fetches
+- If initial fetch returns 404, the app waits for next ticker interval (no recursive retry)
 
 ### Dependencies
 - **gorilla/mux**: HTTP routing
 - **zerolog**: Structured logging
-- **gocron**: Scheduler for NASA APOD fetching
 - **prometheus/client_golang**: Metrics collection
+- **Standard library**: Uses `time.Ticker` for periodic NASA APOD fetching, `math/rand/v2` for random number generation
 
 ## Release Process
 
