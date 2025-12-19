@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="doc corrections">
+    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="container race condition fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataops.go" beforeDir="false" afterPath="$PROJECT_DIR$/dataops.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cron.go" beforeDir="false" afterPath="$PROJECT_DIR$/cron.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fetch.go" beforeDir="false" afterPath="$PROJECT_DIR$/fetch.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fetch_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/fetch_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,35 +50,58 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Go Test.TestMesoMain in github.com/maroda/hpschd.executor&quot;: &quot;Run&quot;,
-    &quot;Go Test.TestTlocalDirs in dataops_test.go.executor&quot;: &quot;Run&quot;,
-    &quot;Go Test.go test hpschd.executor&quot;: &quot;Coverage&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginOnboarding&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/matt&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.editor&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Go Build.go build github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestMesoMain in github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestTlocalDirs in dataops_test.go.executor": "Run",
+    "Go Test.go test hpschd.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.GoLinterPluginOnboarding": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "/Users/matt",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "configurable.group.editor"
   }
-}</component>
-  <component name="RunManager" selected="Go Test.go test hpschd">
+}]]></component>
+  <component name="RunManager" selected="Go Build.go build github.com/maroda/hpschd">
+    <configuration name="go build github.com/maroda/hpschd" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="hpschd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <envs>
+        <env name="NASA_API_KEY" value="Ijb0zLeEt71HMQdy8YjqB583FK3bdh1yThVJYzpu" />
+      </envs>
+      <EXTENSION ID="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </EXTENSION>
+      <kind value="PACKAGE" />
+      <package value="github.com/maroda/hpschd" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestMesoMain in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -123,12 +147,14 @@
         </ENTRIES>
       </EXTENSION>
       <kind value="DIRECTORY" />
+      <package value="github.com/maroda/hpschd" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Go Build.go build github.com/maroda/hpschd" />
       <item itemvalue="Go Test.go test hpschd" />
       <item itemvalue="Go Test.TestTlocalDirs in dataops_test.go" />
       <item itemvalue="Go Test.TestMesoMain in github.com/maroda/hpschd" />
@@ -169,7 +195,8 @@
     <MESSAGE value="doc update" />
     <MESSAGE value="Dockerfile public dir" />
     <MESSAGE value="doc corrections" />
-    <option name="LAST_COMMIT_MESSAGE" value="doc corrections" />
+    <MESSAGE value="container race condition fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="container race condition fix" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

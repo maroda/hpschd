@@ -9,6 +9,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,17 +53,24 @@ func main() {
 		// This prevents ENOENT errors when users visit homepage before cronjob runs
 		apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
 		apodURL := "https://api.nasa.gov/planetary/apod?api_key=" + apiKey
+
 		log.Info().Msg("Fetching initial NASA APOD mesostic...")
 		NASAetl(apodURL)
 		log.Info().Msg("Initial mesostic created, starting cronjob.")
 
-		// Start up scheduler for fetching source text to display on the homepage as a Mesostic.
+		timer := envVar("HPSCHD_TIMER", "77")
+		timerI, err := strconv.Atoi(timer)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to parse HPSCHD_TIMER")
+		}
+
+		// Start up ticker for fetching source text to display on the homepage as a Mesostic.
 		// The NASA APOD API has a query limit of 1k/hr, every 15s is 240/hr.
-		// There is a possible retry bug here...
+		// TODO: There is a possible retry bug here...
 		//		increasingly EXISTENT (existing) mesostics trip up a fast fetch (e.g. 15s)
 		//		try ~11m for something that keeps things fresh enough
 		//		but will hopefully avoid the EXISTENT pileup
-		go fetchCron(666)
+		go fetchTicker(uint64(timerI))
 	}
 
 	// Prometheus

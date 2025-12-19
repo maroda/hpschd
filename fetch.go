@@ -24,17 +24,15 @@ type apodE struct {
 	Version   string `json:"service_version"`
 	Title     string `json:"title"`
 	URL       string `json:"url"`
-	Code      int    `json:"code"` // this is typically 404
-	Msg       string `json:"msg"`  // typically the 404 reason
+	Code      int    `json:"code"`
+	Msg       string `json:"msg"`
 }
 
 // fetchSource ::: Accepts a URL and returns three elements from the struct used to unmarshal the JSON response.
-func fetchSource(u string) (string, string, string) {
+func fetchSource(url string) (string, string, string) {
 	_, _, fu := Envelope()
 
-	url := u
-
-	log.Info().
+	log.Debug().
 		Str("fu", fu).
 		Str("url", url).
 		Msg("URL Received")
@@ -47,50 +45,35 @@ func fetchSource(u string) (string, string, string) {
 	// new request object
 	req, reqErr := http.NewRequest(http.MethodGet, url, nil)
 	if reqErr != nil {
-		log.Error().
-			Str("fu", fu).
-			Err(reqErr).
-			Msg("")
+		log.Error().Str("fu", fu).Err(reqErr).Msg("")
+		return "err", "", reqErr.Error()
 	}
 
 	// make the request
-	req.Header.Set("User-Agent", "Go Mesostic hpschd.xyz")
+	req.Header.Set("User-Agent", "Go Mesostic Client")
 	result, resErr := apodClient.Do(req)
 	if resErr != nil {
-		log.Error().
-			Str("fu", fu).
-			Err(resErr).
-			Msg("")
+		log.Error().Str("fu", fu).Err(resErr).Msg("")
+		return "err", "", resErr.Error()
 	}
-
-	if result.Body != nil {
-		defer result.Body.Close()
-	}
+	defer result.Body.Close()
 
 	body, readErr := io.ReadAll(result.Body)
 	if readErr != nil {
-		log.Error().
-			Str("fu", fu).
-			Err(readErr).
-			Msg("")
+		log.Error().Str("fu", fu).Err(readErr).Msg("")
+		return "err", "", readErr.Error()
 	}
 
 	ae := apodE{}
 
 	jsonErr := json.Unmarshal(body, &ae)
 	if jsonErr != nil {
-		log.Error().
-			Str("fu", fu).
-			Err(jsonErr).
-			Msg("unable to parse value")
+		log.Error().Str("fu", fu).Err(jsonErr).Msg("unable to parse value")
+		return "err", "", jsonErr.Error()
 	}
 
 	if ae.Code == 404 {
-		log.Warn().
-			Str("fu", fu).
-			Int("code", ae.Code).
-			Str("msg", ae.Msg).
-			Msg("no data")
+		log.Warn().Str("fu", fu).Int("code", ae.Code).Str("msg", ae.Msg).Msg("no data")
 		return "err", "404", ae.Msg
 	}
 

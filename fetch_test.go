@@ -6,14 +6,8 @@
 
 package main
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/rs/zerolog"
-)
-
 // TestTFetchSource ::: Match a fetched static URL (i.e. not the latest APOD) with known values.
+/* this has a bug, if DEMO_KEY hits a rate limit (code 429) this test fails
 func TestTFetchSource(t *testing.T) {
 	fmt.Printf("\n\t::: Test Target fetchSource() :::\n")
 
@@ -34,3 +28,4 @@ func TestTFetchSource(t *testing.T) {
 		t.Errorf("%s does not match %s\n", title, matchTitle)
 	}
 }
+*/
