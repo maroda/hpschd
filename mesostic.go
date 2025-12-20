@@ -198,10 +198,6 @@ func (ls LineFrags) Less(i, j int) bool {
 
 // mesoMain ::: Takes a filename as input for processing.
 //
-//	Alternate main()
-//	TODO: only launch the api if a "server" flag is given.
-//			Otherwise, it's a standalone CLI tool.
-//
 // f == filename for processing
 // z == Spine String
 // o == channel for return

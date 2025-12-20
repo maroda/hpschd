@@ -1,9 +1,3 @@
-/*
-
-	Mesostic Scheduler and Tasks
-
-*/
-
 package main
 
 import (
