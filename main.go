@@ -7,9 +7,11 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,6 +21,14 @@ import (
 )
 
 func main() {
+	// Prometheus
+	prometheus.MustRegister(hpschdPingCount)
+	prometheus.MustRegister(hpschdHomeTimer)
+	prometheus.MustRegister(hpschdJsubTimer)
+	prometheus.MustRegister(hpschdFsubTimer)
+	prometheus.MustRegister(hpschdMesolineTimer)
+	prometheus.MustRegister(hpschdNASAetlTimer)
+
 	// Zerolog
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
@@ -34,6 +44,24 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Info().Msg("Log level set to DEBUG")
 	}
+
+	// Run the ticker first so there's at least one poem in the store
+	sp := &ServePoems{Ticker: time.NewTicker(88 * time.Second)}
+	go sp.TickerAPOD()
+	defer sp.Ticker.Stop()
+
+	// Now run the v2 API in parallel
+	go func() {
+		addr := ":9876"
+		sp.Server = &http.Server{
+			Addr:    addr,
+			Handler: sp.SetupMux(),
+		}
+
+		if err := sp.Server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Error().Err(err).Msg("Failed to start v2 server, continuing startup...")
+		}
+	}()
 
 	/*
 		Confirm / initiate data locations
@@ -72,14 +100,6 @@ func main() {
 		//		but will hopefully avoid the EXISTENT pileup
 		go fetchTicker(uint64(timerI))
 	}
-
-	// Prometheus
-	prometheus.MustRegister(hpschdPingCount)
-	prometheus.MustRegister(hpschdHomeTimer)
-	prometheus.MustRegister(hpschdJsubTimer)
-	prometheus.MustRegister(hpschdFsubTimer)
-	prometheus.MustRegister(hpschdMesolineTimer)
-	prometheus.MustRegister(hpschdNASAetlTimer)
 
 	// Deploy the web server
 	rt := mux.NewRouter()

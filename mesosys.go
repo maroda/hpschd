@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"github.com/rs/zerolog/log"
@@ -18,28 +17,10 @@ import (
 	All files in the pattern `*sys[_test].go` belong to this version.
 */
 
-type DataAPOD struct {
-	Copyright      string `json:"copyright"`
-	Date           string `json:"date"`
-	Explaination   string `json:"explanation"`
-	HDURL          string `json:"media"`
-	MediaType      string `json:"media_type"`
-	ServiceVersion string `json:"service_version"`
-	Title          string `json:"title"`
-	URL            string `json:"url"`
-	Code           int    `json:"code"`
-	Msg            string `json:"msg"`
-}
-
-type DataAPI struct {
-	Text        string `json:"text"`
-	SpineString string
-}
-
 // Mesostic contains all data and their transformation for a single poem
 type Mesostic struct {
 	MU         sync.Mutex
-	Date       time.Time   `json:"date"`
+	Date       string      `json:"date"`
 	Source     io.Reader   `json:"source"`     // Source JSON
 	SourceData interface{} `json:"source_raw"` // Source data, decoded from JSON
 	SourceTxt  string      `json:"source_txt"` // Raw text to transform
@@ -54,12 +35,13 @@ type Mesostic struct {
 	LineWest   []string    `json:"line_west"`  // Used for alignment
 	LineEast   []string    `json:"line_east"`  // Used for alignment
 	EmptyLine  []int       `json:"empty_line"` // Line address for empty space
+	Poem       string      `json:"poem"`       // Final multi-line poem
 }
 
 func NewMesostic(title, source string, data interface{}) *Mesostic {
 	m := &Mesostic{
 		MU:         sync.Mutex{},
-		Date:       time.Now(),
+		Date:       "",
 		Source:     strings.NewReader(source),
 		SourceData: data,
 		SourceTxt:  "",
@@ -73,18 +55,15 @@ func NewMesostic(title, source string, data interface{}) *Mesostic {
 		LineWest:   make([]string, 0),
 		LineEast:   make([]string, 0),
 		EmptyLine:  make([]int, 0),
+		Poem:       "",
 	}
 	m.ParseSpine()
 	m.ParseSourceJSON(data)
 	return m
 }
 
-// BuildMeso provides similar functionality to mesoMain
-// to refactor, piece out mesoMain and then insert here
-// Instead of using a channel for the mesostic, just return it.
-// mesoMain:f becomes m.Filename
-// mesoMain:z becomes m.Spine
-// mesoMain:o becomes a return value
+// BuildMeso takes the populated struct and builds the final poem
+// replaces mesoMain
 func (m *Mesostic) BuildMeso() string {
 	m.MU.Lock()
 	defer m.MU.Unlock()
@@ -113,6 +92,7 @@ func (m *Mesostic) BuildMeso() string {
 	for _, ml := range m.MLines {
 		mesostic += "\n" + ml
 	}
+	m.Poem = mesostic
 	return mesostic
 }
 
@@ -127,11 +107,14 @@ func (m *Mesostic) FormatFullLines() bool {
 		line = west + east
 
 		// Is this line listed as Empty?
-		for _, el := range m.EmptyLine {
-			if i == el {
-				line = ""
+		// TODO: This logic doesn't work?
+		/*
+			for _, el := range m.EmptyLine {
+				if i == el {
+					line = ""
+				}
 			}
-		}
+		*/
 
 		// This should be the only place m.MLines is modified
 		m.MLines = append(m.MLines, line)
@@ -151,6 +134,7 @@ func isStruct(i interface{}) bool {
 // Caller holds the lock
 func (m *Mesostic) FormatLine(line string) bool {
 	ssChar := m.Spine[m.SpineIdx]
+	nxChar := m.Spine[(m.SpineIdx+1)%len(m.Spine)]
 	chars := make(map[string][]string)
 	lowerline := strings.ToLower(line)
 
@@ -159,11 +143,17 @@ func (m *Mesostic) FormatLine(line string) bool {
 	for _, c := range lowerline {
 		char := string(c)
 
-		if char != ssChar { // Not the Spine String yet
+		if char != ssChar { // Not the Spine String, either side of it
+			// If the next char in the SS is found,
+			// drop from here and start the next line
+			if mode == "east" && char == nxChar {
+				break
+			}
 			chars[mode] = append(chars[mode], char)
 		} else if char == ssChar { // This is the Spine String
+			// If this is a repeat of the SS char,
+			// drop from here and start the next line
 			if mode == "east" {
-				// SS found again, drop from here and start the next line
 				break
 			}
 			char = strings.ToUpper(char)
@@ -172,8 +162,8 @@ func (m *Mesostic) FormatLine(line string) bool {
 		}
 	}
 
-	// The Spine String char was not found, so the line isn't used
-	if mode != "east" {
+	// Any line that makes it through with mode=west isn't used.
+	if mode == "west" {
 		return false
 	}
 
