@@ -5,15 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="new mesostic engine">
-      <change afterPath="$PROJECT_DIR$/apisys.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/apisys_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nasasys.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nasasys_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/poem.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apisys.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataops.go" beforeDir="false" afterPath="$PROJECT_DIR$/dataops.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mesosys.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesosys.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mesosys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesosys_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nasasys.go" beforeDir="false" afterPath="$PROJECT_DIR$/nasasys.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nasasys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/nasasys_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,6 +73,7 @@
     "DefaultGoTemplateProperty": "Go File",
     "DefaultHtmlFileTemplate": "HTML File",
     "Go Build.go build github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestCleanApodTitle in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestGetAPOD in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestMesoMain in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestMesostic_BuildMeso in github.com/maroda/hpschd.executor": "Run",
@@ -93,7 +93,7 @@
     "Go Test.TestSingleFetch in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSingleFetchWithClient_Timeout in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestTlocalDirs in dataops_test.go.executor": "Run",
-    "Go Test.go test hpschd.executor": "Run",
+    "Go Test.go test hpschd.executor": "Coverage",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
@@ -115,7 +115,7 @@
     "settings.editor.selected.configurable": "configurable.group.editor"
   }
 }]]></component>
-  <component name="RunManager" selected="Go Build.go build github.com/maroda/hpschd">
+  <component name="RunManager" selected="Go Test.TestSetupMux in github.com/maroda/hpschd">
     <configuration name="go build github.com/maroda/hpschd" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -136,6 +136,17 @@
       <package value="github.com/maroda/hpschd" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestCleanApodTitle in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hpschd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/maroda/hpschd" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestCleanApodTitle\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestGetAPOD in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -160,6 +171,17 @@
       <pattern value="^\QTestMesostic_BuildMeso\E$" />
       <method v="2" />
     </configuration>
+    <configuration name="TestMesostic_ParseSpine in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hpschd" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/maroda/hpschd" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestMesostic_ParseSpine\E$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestSetupMux in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
@@ -169,28 +191,6 @@
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <pattern value="^\QTestSetupMux\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestSetupMux/Errors_on_incorrect_JSON_body in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hpschd" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="github.com/maroda/hpschd" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <pattern value="^\QTestSetupMux\E$/^\QErrors_on_incorrect_JSON_body\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestSetupMux/Homepage_frontend_answers in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hpschd" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="github.com/maroda/hpschd" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <pattern value="^\QTestSetupMux\E$/^\QHomepage_frontend_answers\E$" />
       <method v="2" />
     </configuration>
     <configuration name="go test hpschd" type="GoTestRunConfiguration" factoryName="Go Test" nameIsGenerated="true">
@@ -216,19 +216,19 @@
     <list>
       <item itemvalue="Go Build.go build github.com/maroda/hpschd" />
       <item itemvalue="Go Test.go test hpschd" />
+      <item itemvalue="Go Test.TestCleanApodTitle in github.com/maroda/hpschd" />
+      <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestGetAPOD in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestMesostic_BuildMeso in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestSetupMux in github.com/maroda/hpschd" />
-      <item itemvalue="Go Test.TestSetupMux/Errors_on_incorrect_JSON_body in github.com/maroda/hpschd" />
-      <item itemvalue="Go Test.TestSetupMux/Homepage_frontend_answers in github.com/maroda/hpschd" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestSetupMux in github.com/maroda/hpschd" />
+        <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
+        <item itemvalue="Go Test.TestCleanApodTitle in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestMesostic_BuildMeso in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestGetAPOD in github.com/maroda/hpschd" />
-        <item itemvalue="Go Test.TestSetupMux in github.com/maroda/hpschd" />
-        <item itemvalue="Go Test.TestSetupMux/Errors_on_incorrect_JSON_body in github.com/maroda/hpschd" />
-        <item itemvalue="Go Test.TestSetupMux/Homepage_frontend_answers in github.com/maroda/hpschd" />
       </list>
     </recent_temporary>
   </component>
@@ -271,6 +271,6 @@
     <settings-migrated>true</settings-migrated>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1766466803298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1767471552526" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

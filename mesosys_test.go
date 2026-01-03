@@ -9,7 +9,8 @@ func TestMesostic_ParseSpine(t *testing.T) {
 		Title: "music has the rights to children",
 	}
 
-	mesostic.ParseSpine()
+	newspine := envVar("HPSCHD_SPINESTRING", "")
+	mesostic.ParseSpine(newspine)
 
 	if mesostic.Spine[0] != "m" {
 		t.Errorf("Spine does not start with Title character")

@@ -7,12 +7,12 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog/log"
 )
 
 type DataAPI struct {
@@ -74,6 +74,7 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetJSON is the v1 API that will be obviated by JSONHandler
 func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	di := &DataAPI{}
 
@@ -103,6 +104,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	title := di.SpineString
+	os.Unsetenv("HPSCHD_SPINESTRING") // The API overrides this setting
 	m := NewMesostic(title, string(body), di)
 
 	m.MU.Lock()
@@ -115,8 +117,12 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(mesostic)
 	if err != nil {
-		log.Err(err).Msg("Encode Error")
+		slog.Error("Encode Error", slog.Any("error", err))
 		http.Error(w, "encode error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (sp *ServePoems) JSONHandler(w http.ResponseWriter, r *http.Request) {
+	panic("implement me")
 }

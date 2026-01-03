@@ -54,13 +54,14 @@ func rndDate(salt int64) string {
 	return newdate
 }
 
-// envVar ::: Grab a single ENV VAR and provide a fallback configuration.
+// envVar ::: Grab a single ENV VAR with a provided default
+// This will not set an ENV VAR that exists but set to an empty string.
 func envVar(env, alt string) string {
-	url, ext := os.LookupEnv(env)
+	value, ext := os.LookupEnv(env)
 	if !ext {
-		url = alt
+		return alt
 	}
-	return url
+	return value
 }
 
 // ichingMeso ::: Uses chance operations to select an existing NASA APOD Mesostic.

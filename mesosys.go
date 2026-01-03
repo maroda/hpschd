@@ -3,13 +3,12 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
 	"unicode"
-
-	"github.com/rs/zerolog/log"
 )
 
 /*
@@ -57,7 +56,9 @@ func NewMesostic(title, source string, data interface{}) *Mesostic {
 		EmptyLine:  make([]int, 0),
 		Poem:       "",
 	}
-	m.ParseSpine()
+	// If the EnvVar is set, use it. No default so this can be left unset.
+	newspine := envVar("HPSCHD_SPINESTRING", "")
+	m.ParseSpine(newspine)
 	m.ParseSourceJSON(data)
 	return m
 }
@@ -74,14 +75,16 @@ func (m *Mesostic) BuildMeso() string {
 	re := regexp.MustCompile(`[,.;:]`)
 	sourceLines := re.Split(m.SourceTxt, -1)
 
+	// Run the lines through a mesostic algorithm
 	for _, sl := range sourceLines {
 		if m.FormatLine(sl) {
-			m.SpineIdx++
+			// Increase the index address, wrapping if it reaches the end of the Spine String
+			m.SpineIdx = (m.SpineIdx + 1) % len(m.Spine)
 		} else {
 			m.EmptyLine = append(m.EmptyLine, m.MLinesIdx)
 		}
 
-		// Advance line every time (non-matches get line-returns)
+		// Advance line every time
 		m.MLinesIdx++
 	}
 
@@ -106,16 +109,6 @@ func (m *Mesostic) FormatFullLines() bool {
 		west := strings.Repeat(" ", m.WWidth-len(lw)) + lw
 		line = west + east
 
-		// Is this line listed as Empty?
-		// TODO: This logic doesn't work?
-		/*
-			for _, el := range m.EmptyLine {
-				if i == el {
-					line = ""
-				}
-			}
-		*/
-
 		// This should be the only place m.MLines is modified
 		m.MLines = append(m.MLines, line)
 	}
@@ -130,9 +123,18 @@ func isStruct(i interface{}) bool {
 	return v.Kind() == reflect.Struct
 }
 
-// FormatLine creates the mesostic line
+// FormatLine creates the mesostic line,
+// without operating on the Spine String itself
 // Caller holds the lock
 func (m *Mesostic) FormatLine(line string) bool {
+	if len(m.Spine) == 0 {
+		slog.Error("No spinestring found!",
+			slog.String("line", line),
+			slog.String("date", m.Date),
+			slog.String("spine", strings.Join(m.Spine, " ")),
+			slog.String("source_title", m.Title))
+		return false
+	}
 	ssChar := m.Spine[m.SpineIdx]
 	nxChar := m.Spine[(m.SpineIdx+1)%len(m.Spine)]
 	chars := make(map[string][]string)
@@ -194,13 +196,13 @@ func (m *Mesostic) ParseSourceJSON(ps interface{}) bool {
 	defer m.MU.Unlock()
 
 	if !isStruct(ps) {
-		log.Error().Msg("Not a recognized decode target for JSON source")
+		slog.Error("Not a recognized decode target for JSON source")
 		return false
 	}
 
 	decoder := json.NewDecoder(m.Source)
 	if err := decoder.Decode(&ps); err != nil {
-		log.Error().Msg("Mesostic.JSON.Decoder Error")
+		slog.Error("Mesostic.JSON.Decoder Error", slog.Any("error", err))
 		return false
 	}
 
@@ -208,13 +210,38 @@ func (m *Mesostic) ParseSourceJSON(ps interface{}) bool {
 }
 
 // ParseSpine changes the Title into a lowercase slice without whitespace
-func (m *Mesostic) ParseSpine() {
+//
+//	When set to a non-empty value, /ss/ overrides m.Title
+func (m *Mesostic) ParseSpine(ss string) bool {
 	m.MU.Lock()
 	defer m.MU.Unlock()
 
-	for _, c := range m.Title {
+	var spine string
+	var titleLen int
+	maxLen := 32
+
+	// Set the title as the spinestring if /ss/ is empty,
+	// always cut the spinestring off at maxLen
+	if ss == "" {
+		if len(m.Title) > maxLen {
+			spine = m.Title[:maxLen]
+		} else {
+			spine = m.Title
+		}
+		spine = m.Title[:titleLen]
+	} else {
+		if len(ss) > maxLen {
+			spine = ss[:maxLen]
+		} else {
+			spine = ss
+		}
+	}
+
+	// Create the Spine by removing whitespace and setting all lowercase
+	for _, c := range spine {
 		if !unicode.IsSpace(c) {
 			m.Spine = append(m.Spine, strings.ToLower(string(c)))
 		}
 	}
+	return true
 }

@@ -7,10 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -63,8 +62,7 @@ func (sp *ServePoems) TickerAPOD() {
 	// The first time this runs, it fetches the current default date
 	_, err := GetAPOD(url, fs)
 	if err != nil {
-		log.Error().Err(err).Msg("could not get APOD")
-		slog.Error("Error fetching APOD from " + url)
+		slog.Error("could not get APOD", slog.Any("error", err), slog.String("url", url))
 	}
 
 	for {
@@ -75,8 +73,7 @@ func (sp *ServePoems) TickerAPOD() {
 			url = "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=" + apiKey
 			_, err = GetAPOD(url, fs)
 			if err != nil {
-				log.Error().Err(err).Msg("could not get APOD")
-				slog.Error("Error fetching APOD from " + url)
+				slog.Error("could not get APOD", slog.Any("error", err), slog.String("url", url))
 			}
 		}
 	}
@@ -157,8 +154,8 @@ func GetAPOD(url string, fs FileSystem) (string, error) {
 		slog.Error("Unmarshal Error", slog.Any("Error", err))
 		return "", fmt.Errorf("unmarshal url error: %s", url)
 	}
-	title := dd.Title
-	m := NewMesostic(title, string(body), dd)
+	title := cleanString(dd.Title)            // Removes punctuation, does not remove whitespace
+	m := NewMesostic(title, string(body), dd) // Removes whitespace for the spine string
 
 	// When it needs to write directly to the struct, a lock is required
 	m.MU.Lock()
@@ -168,13 +165,21 @@ func GetAPOD(url string, fs FileSystem) (string, error) {
 
 	// When using methods from the struct, no lock is used
 	mesostic := m.BuildMeso()
-	filename := fmt.Sprintf("store/%s__%s", m.Date, strings.Join(m.Spine, ""))
+
+	// Write the file
+	filename := fmt.Sprintf("store/%s__%s", m.Date, strings.ReplaceAll(title, " ", "_"))
 	if err = fs.WriteFile(filename, []byte(mesostic), 0644); err != nil {
-		log.Error().Err(err).Msgf("Failed to write mesostic")
-		slog.Error("write file error")
+		slog.Error("Failed to write mesostic", slog.Any("error", err), slog.String("filename", filename))
 		return "", fmt.Errorf("write file error: %s", filename)
 	}
 
-	log.Info().Str("filename", filename).Msg("apod mesostic stored")
+	slog.Info("apod mesostic stored", slog.String("filename", filename))
 	return m.Poem, nil
+}
+
+// cleanString removes unwanted chars from strings without removing whitespace
+func cleanString(title string) string {
+	remove_re := regexp.MustCompile(`[,.;:'"]`)
+	removed := remove_re.ReplaceAllString(title, "")
+	return strings.TrimSpace(removed)
 }

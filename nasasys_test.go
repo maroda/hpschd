@@ -107,6 +107,13 @@ func TestSingleFetchWithClient_Timeout(t *testing.T) {
 	assertGotError(t, err)
 }
 
+func TestCleanApodTitle(t *testing.T) {
+	title := "AB1: Clouds, Sprites, Aurora-Signs"
+	want := "AB1 Clouds Sprites Aurora-Signs"
+	got := cleanString(title)
+	assertStringContains(t, got, want)
+}
+
 /// Helpers
 
 // MockFS for dependency injection on FileSystem to test config file
