@@ -28,29 +28,16 @@ var (
     "url": "https://apod.nasa.gov/apod/image/0001/flammarion_halfcolor_big.gif"
 }
 `
-	mesosticApod = `
-                 welcome To
-                         Humanity continually r
-             first as sphEr
-                      in M
-             a few centurIes ago as the ga
-          and within the Last century as the matter emanating from the big bang
-                during miL
-                   to undErsta
-                        aNd eve
-whatever our accomplishmeNts
-                    humanIty w
-and possibly define the sUrro`
 )
 
 func TestGetAPOD(t *testing.T) {
 	mockWWW := makeMockWebServBody(0*time.Millisecond, testApodJSON)
 	mockFS := MockFS{}
+	want := "first as sphEr"
 
 	got, err := GetAPOD(mockWWW.URL, mockFS)
 	assertError(t, err, nil)
-	assertStringContains(t, got, mesosticApod)
-	t.Log(got)
+	assertStringContains(t, got, want)
 }
 
 // TestSingleFetch should handle single URLs

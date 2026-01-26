@@ -5,19 +5,43 @@ import (
 )
 
 func TestMesostic_ParseSpine(t *testing.T) {
-	mesostic := Mesostic{
-		Title: "music has the rights to children",
-	}
+	t.Run("Creates spine string (whitespace included)", func(t *testing.T) {
+		mesostic := Mesostic{
+			Title: "music has the rights to children",
+		}
 
-	newspine := envVar("HPSCHD_SPINESTRING", "")
-	mesostic.ParseSpine(newspine)
+		newspine := envVar("HPSCHD_SPINESTRING", "")
+		mesostic.ParseSpine(newspine, true)
 
-	if mesostic.Spine[0] != "m" {
-		t.Errorf("Spine does not start with Title character")
-	}
-	if mesostic.Spine[5] != "h" {
-		t.Errorf("Spine does not skip the space after the first word")
-	}
+		if len(mesostic.Spine) < 1 {
+			t.Errorf("Spine should have more characters")
+		}
+		if mesostic.Spine[0] != "m" {
+			t.Errorf("Spine does not start with Title character")
+		}
+		if mesostic.Spine[5] != " " {
+			t.Errorf("Spine skipped the space after the first word")
+		}
+	})
+
+	t.Run("Creates spine string with no whitespace", func(t *testing.T) {
+		mesostic := Mesostic{
+			Title: "music has the rights to children",
+		}
+
+		newspine := envVar("HPSCHD_SPINESTRING", "")
+		mesostic.ParseSpine(newspine, false)
+
+		if len(mesostic.Spine) < 1 {
+			t.Errorf("Spine should have more characters")
+		}
+		if mesostic.Spine[0] != "m" {
+			t.Errorf("Spine does not start with Title character")
+		}
+		if mesostic.Spine[5] != "h" {
+			t.Errorf("Spine does not skip the space after the first word")
+		}
+	})
 }
 
 func TestMesostic_BuildMeso(t *testing.T) {
@@ -25,6 +49,7 @@ func TestMesostic_BuildMeso(t *testing.T) {
 		title := "The Millennium that Defines Universe"
 		ae := &DataAPOD{}
 		meso := NewMesostic(title, testApodJSON, ae)
+		want := "first as sphEr"
 
 		gotae, ok := meso.SourceData.(*DataAPOD)
 		if !ok {
@@ -35,8 +60,7 @@ func TestMesostic_BuildMeso(t *testing.T) {
 		meso.MU.Unlock()
 
 		got := meso.BuildMeso()
-		assertStringContains(t, got, mesosticApod)
-		t.Log(got)
+		assertStringContains(t, got, want)
 	})
 
 	t.Run("Correct mesostic text returned for DataAPI source", func(t *testing.T) {

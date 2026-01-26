@@ -58,7 +58,9 @@ func NewMesostic(title, source string, data interface{}) *Mesostic {
 	}
 	// If the EnvVar is set, use it. No default so this can be left unset.
 	newspine := envVar("HPSCHD_SPINESTRING", "")
-	m.ParseSpine(newspine)
+
+	// Keep whitespace as the default
+	m.ParseSpine(newspine, true)
 	m.ParseSourceJSON(data)
 	return m
 }
@@ -170,8 +172,17 @@ func (m *Mesostic) FormatLine(line string) bool {
 	}
 
 	// Record each side of the Spine String as west|east lines
-	westline := strings.TrimSpace(strings.Join(chars["west"], ""))
-	eastline := strings.TrimSpace(strings.Join(chars["east"], ""))
+	var westline, eastline string
+	westline = strings.TrimSpace(strings.Join(chars["west"], ""))
+	// Now, if west is empty, it contained whitespace,
+	// so make the entire line whitespace.
+	if westline == "" {
+		eastline = ""
+	} else {
+		eastline = strings.TrimSpace(strings.Join(chars["east"], ""))
+	}
+
+	// Append the new lines
 	m.LineWest = append(m.LineWest, westline)
 	m.LineEast = append(m.LineEast, eastline)
 
@@ -212,24 +223,24 @@ func (m *Mesostic) ParseSourceJSON(ps interface{}) bool {
 // ParseSpine changes the Title into a lowercase slice without whitespace
 //
 //	When set to a non-empty value, /ss/ overrides m.Title
-func (m *Mesostic) ParseSpine(ss string) bool {
+func (m *Mesostic) ParseSpine(ss string, keepSpace bool) bool {
 	m.MU.Lock()
 	defer m.MU.Unlock()
 
 	var spine string
-	var titleLen int
 	maxLen := 32
 
 	// Set the title as the spinestring if /ss/ is empty,
 	// always cut the spinestring off at maxLen
 	if ss == "" {
+		slog.Debug("Empty spine, using title", slog.String("title", m.Title))
 		if len(m.Title) > maxLen {
 			spine = m.Title[:maxLen]
 		} else {
 			spine = m.Title
 		}
-		spine = m.Title[:titleLen]
 	} else {
+		slog.Debug("Spine from configuration", slog.String("spine", ss))
 		if len(ss) > maxLen {
 			spine = ss[:maxLen]
 		} else {
@@ -237,11 +248,17 @@ func (m *Mesostic) ParseSpine(ss string) bool {
 		}
 	}
 
-	// Create the Spine by removing whitespace and setting all lowercase
 	for _, c := range spine {
-		if !unicode.IsSpace(c) {
+		if !keepSpace {
+			// Create the Spine by removing whitespace and setting all lowercase
+			if !unicode.IsSpace(c) {
+				m.Spine = append(m.Spine, strings.ToLower(string(c)))
+			}
+		} else {
+			// Keep all whitespace
 			m.Spine = append(m.Spine, strings.ToLower(string(c)))
 		}
 	}
+
 	return true
 }
