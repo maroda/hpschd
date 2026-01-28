@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -43,6 +44,7 @@ func (sp *ServePoems) SetupMux() *mux.Router {
 
 func (sp *ServePoems) HealthzHandler(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }
 
+// HomeMesostic is the final poem that is served on the homepage or returned by the API.
 type HomeMesostic struct {
 	mu    sync.Mutex
 	Title string `json:"title"`
@@ -55,11 +57,16 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// This is created every time the homepage is requested
 	hm := HomeMesostic{}
-	hm.mu.Lock()
+	cache := "store"             // Datastore of created poems
+	rndFile := ichingMeso(cache) // Random filename from existing poems
 
-	cache := "store"                 // Datastore of created poems
-	rndFile := ichingMeso(cache)     // Random filename from existing poems
-	hm.Title = rndFile               // Read title of mesostic file
+	// TODO: hm.Title should be parsed for human readability, not just the filename
+	nameParts := strings.Split(rndFile, "_")
+	// fullDate := nameParts[0]
+	fullTitle := nameParts[1:]
+
+	hm.mu.Lock()
+	hm.Title = strings.Join(fullTitle, " ")
 	hm.Poem = readMesoFile(&rndFile) // Load poem from mesostic file
 	hm.mu.Unlock()
 
