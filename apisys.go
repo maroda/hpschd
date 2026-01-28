@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io"
 	"log/slog"
@@ -89,7 +88,6 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	fmt.Println(string(body))
 	err = json.Unmarshal(body, di)
 	if err != nil {
 		slog.Error("cannot unmarshal body")

@@ -160,6 +160,8 @@ func (m *Mesostic) FormatLine(line string) bool {
 			if mode == "east" {
 				break
 			}
+
+			// Uppercase the SpineString character
 			char = strings.ToUpper(char)
 			chars[mode] = append(chars[mode], char)
 			mode = "east"
@@ -167,6 +169,7 @@ func (m *Mesostic) FormatLine(line string) bool {
 	}
 
 	// Any line that makes it through with mode=west isn't used.
+	// Return 'false' without formatting a line.
 	if mode == "west" {
 		return false
 	}
@@ -179,14 +182,18 @@ func (m *Mesostic) FormatLine(line string) bool {
 	if westline == "" {
 		eastline = ""
 	} else {
-		eastline = strings.TrimSpace(strings.Join(chars["east"], ""))
+		// Not using TrimSpace here because we want the front space
+		// when the SpineString appears at the end of the previous word.
+		eastline = strings.Join(chars["east"], "")
 	}
 
 	// Append the new lines
 	m.LineWest = append(m.LineWest, westline)
 	m.LineEast = append(m.LineEast, eastline)
 
-	// Record the widest line
+	// Record the widest line.
+	// This allows the mesostic to be printed as a function of the widest line,
+	// which keeps the SpineString centered down the exact middle of the poem.
 	mline := westline + eastline
 	m.Width = wider(len(mline), m.Width)
 	m.WWidth = wider(len(westline), m.WWidth)

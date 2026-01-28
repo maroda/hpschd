@@ -69,7 +69,6 @@ func ichingMeso(dir string) string {
 	var fileList []string
 	for _, entry := range dirents(dir) {
 		fullPath := filepath.Join(dir, entry.Name())
-		fmt.Println(fullPath)
 		fileList = append(fileList, fullPath)
 	}
 	if fileList == nil {

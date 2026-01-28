@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="Enable whitespace for spinestring">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="JSONv2, resource cleanup">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/apisys.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apisys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataops.go" beforeDir="false" afterPath="$PROJECT_DIR$/dataops.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mesosys.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesosys.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,7 +92,7 @@
     "Go Test.TestSingleFetch in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSingleFetchWithClient_Timeout in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestTlocalDirs in dataops_test.go.executor": "Run",
-    "Go Test.go test hpschd.executor": "Coverage",
+    "Go Test.go test hpschd.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
@@ -267,12 +266,13 @@
     <MESSAGE value="new mesostic engine" />
     <MESSAGE value="v2 APOD works, API broken" />
     <MESSAGE value="Enable whitespace for spinestring" />
-    <option name="LAST_COMMIT_MESSAGE" value="Enable whitespace for spinestring" />
+    <MESSAGE value="JSONv2, resource cleanup" />
+    <option name="LAST_COMMIT_MESSAGE" value="JSONv2, resource cleanup" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1769406128210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/hpschd$go_test_hpschd.out" NAME="go test hpschd Coverage Results" MODIFIED="1769559296096" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
