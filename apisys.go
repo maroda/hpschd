@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type DataAPI struct {
@@ -32,7 +31,7 @@ type ServePoems struct {
 func (sp *ServePoems) SetupMux() *mux.Router {
 	r := mux.NewRouter()
 
-	r.Handle("/metrics", promhttp.Handler())
+	// r.Handle("/metrics", promhttp.Handler())
 	r.HandleFunc("/", sp.HomeHandler)
 	r.HandleFunc("/healthz", sp.HealthzHandler)
 
@@ -48,31 +47,38 @@ func (sp *ServePoems) HealthzHandler(w http.ResponseWriter, r *http.Request) { w
 type HomeMesostic struct {
 	mu    sync.Mutex
 	Title string `json:"title"`
+	ADate string `json:"date"`
 	Poem  string `json:"poem"`
 }
 
 // HomeHandler displays the new mesostic on the homepage
 func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	hometmpl := template.Must(template.ParseFiles("public/poem.html"))
+	hometmpl := template.Must(template.ParseFiles("public/index.html"))
 
 	// This is created every time the homepage is requested
 	hm := HomeMesostic{}
 	cache := "store"             // Datastore of created poems
 	rndFile := ichingMeso(cache) // Random filename from existing poems
 
-	// TODO: hm.Title should be parsed for human readability, not just the filename
+	// Create human-friendly date and title
 	nameParts := strings.Split(rndFile, "_")
-	// fullDate := nameParts[0]
+	fullDate, ok := strings.CutPrefix(nameParts[0], cache+"/")
+	if !ok {
+		slog.Warn("Could not parse date")
+	}
 	fullTitle := nameParts[1:]
 
+	// Update the struct
 	hm.mu.Lock()
-	hm.Title = strings.Join(fullTitle, " ")
+	hm.Title = strings.TrimSpace(strings.Join(fullTitle, " "))
+	hm.ADate = fullDate
 	hm.Poem = readMesoFile(&rndFile) // Load poem from mesostic file
 	hm.mu.Unlock()
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
+	// Write the HTML via template
 	err := hometmpl.Execute(w, hm)
 	if err != nil {
 		slog.Error("cannot render html")

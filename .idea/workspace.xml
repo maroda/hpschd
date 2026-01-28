@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1b1e288c-d022-4db8-9300-b46902dfb918" name="Changes" comment="OpenTelemetry replacing Prometheus plus removal of v1 files">
+    <list default="true" id="1b1e288c-d022-4db8-9300-b46902dfb918" name="Changes" comment="Homepage shows title">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile.local" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile.local" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apisys.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/poem.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/poem.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/poem.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -181,7 +184,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="OpenTelemetry replacing Prometheus plus removal of v1 files" />
-    <option name="LAST_COMMIT_MESSAGE" value="OpenTelemetry replacing Prometheus plus removal of v1 files" />
+    <MESSAGE value="Homepage shows title" />
+    <option name="LAST_COMMIT_MESSAGE" value="Homepage shows title" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
