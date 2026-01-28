@@ -45,7 +45,7 @@ func (sp *ServePoems) SetupMux() *mux.Router {
 func (sp *ServePoems) HealthzHandler(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) }
 
 type HomeMesostic struct {
-	MU    sync.Mutex
+	mu    sync.Mutex
 	Title string `json:"title"`
 	Poem  string `json:"poem"`
 }
@@ -56,13 +56,13 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// This is created every time the homepage is requested
 	hm := HomeMesostic{}
-	hm.MU.Lock()
+	hm.mu.Lock()
 
 	cache := "store"                 // Datastore of created poems
 	rndFile := ichingMeso(cache)     // Random filename from existing poems
 	hm.Title = rndFile               // Read title of mesostic file
 	hm.Poem = readMesoFile(&rndFile) // Load poem from mesostic file
-	hm.MU.Unlock()
+	hm.mu.Unlock()
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -74,7 +74,7 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetJSON is the v1 API that will be obviated by JSONHandler
+// GetJSON returns a plaintext mesostic from the submitted JSON
 func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	di := &DataAPI{}
 
@@ -103,6 +103,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "empty text or spinestring", http.StatusBadRequest)
 		return
 	}
+
 	title := di.SpineString
 	os.Unsetenv("HPSCHD_SPINESTRING") // The API overrides this setting
 	m := NewMesostic(title, string(body), di)
@@ -112,17 +113,18 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	m.Date = time.Now().Format("2006-01-02")
 	m.MU.Unlock()
 
-	mesostic := m.BuildMeso()
+	// HomeMesostic is used, identical to how it's served on the homepage
+	mesojson := &HomeMesostic{
+		Title: title,
+		Poem:  m.BuildMeso(),
+	}
 
+	// Write the mesostic back
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(mesostic)
+	err = json.NewEncoder(w).Encode(mesojson)
 	if err != nil {
 		slog.Error("Encode Error", slog.Any("error", err))
 		http.Error(w, "encode error", http.StatusInternalServerError)
 		return
 	}
-}
-
-func (sp *ServePoems) JSONHandler(w http.ResponseWriter, r *http.Request) {
-	panic("implement me")
 }

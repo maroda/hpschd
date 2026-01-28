@@ -62,7 +62,7 @@ func TestSetupMux(t *testing.T) {
 			target:   "/app",
 			method:   "POST",
 			wantCode: http.StatusOK,
-			expect:   "quiCk",
+			expect:   "lAzy",
 			jsonbody: apiJSON,
 		},
 	}
@@ -76,6 +76,7 @@ func TestSetupMux(t *testing.T) {
 
 			assertStatus(t, w.Code, tt.wantCode)
 			assertStringContains(t, w.Body.String(), tt.expect)
+			// t.Log(w.Body.String())
 		})
 	}
 }

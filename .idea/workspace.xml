@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="v2 APOD works, API broken">
+    <list default="true" id="f15bfc87-d0f4-45e9-8cdc-980104e950a3" name="Changes" comment="Enable whitespace for spinestring">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesosys.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesosys.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesosys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/mesosys_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nasasys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/nasasys_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apisys.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apisys_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/apisys_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,6 +85,7 @@
     "Go Test.TestSetupMux in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSetupMux/Errors_on_incorrect_JSON_body in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSetupMux/Homepage_frontend_answers in github.com/maroda/hpschd.executor": "Run",
+    "Go Test.TestSetupMux/Retrieves_mesostic in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSetupMux_Data in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSetupMux_Data/Healthz_endpoint_answers in github.com/maroda/hpschd.executor": "Run",
     "Go Test.TestSetupMux_Data/Homepage_frontend_answers in github.com/maroda/hpschd.executor": "Run",
@@ -169,7 +171,7 @@
       <pattern value="^\QTestMesostic_ParseSpine\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestMesostic_ParseSpine/Creates_spine_string_(whitespace_included) in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestSetupMux in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
@@ -177,10 +179,10 @@
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestMesostic_ParseSpine\E$/^\QCreates_spine_string_(whitespace_included)\E$" />
+      <pattern value="^\QTestSetupMux\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestMesostic_ParseSpine/Creates_spine_string_with_no_whitespace in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestSetupMux/Retrieves_mesostic in github.com/maroda/hpschd" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hpschd" />
       <working_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
@@ -188,7 +190,7 @@
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestMesostic_ParseSpine\E$/^\QCreates_spine_string_with_no_whitespace\E$" />
+      <pattern value="^\QTestSetupMux\E$/^\QRetrieves_mesostic\E$" />
       <method v="2" />
     </configuration>
     <configuration name="go test hpschd" type="GoTestRunConfiguration" factoryName="Go Test" nameIsGenerated="true">
@@ -214,19 +216,19 @@
     <list>
       <item itemvalue="Go Build.go build github.com/maroda/hpschd" />
       <item itemvalue="Go Test.go test hpschd" />
+      <item itemvalue="Go Test.TestSetupMux in github.com/maroda/hpschd" />
+      <item itemvalue="Go Test.TestSetupMux/Retrieves_mesostic in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestMesostic_BuildMeso/Correct_mesostic_text_returned_for_APOD_source in github.com/maroda/hpschd" />
-      <item itemvalue="Go Test.TestMesostic_ParseSpine/Creates_spine_string_(whitespace_included) in github.com/maroda/hpschd" />
-      <item itemvalue="Go Test.TestMesostic_ParseSpine/Creates_spine_string_with_no_whitespace in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
       <item itemvalue="Go Test.TestGetAPOD in github.com/maroda/hpschd" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestSetupMux in github.com/maroda/hpschd" />
+        <item itemvalue="Go Test.TestSetupMux/Retrieves_mesostic in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestMesostic_BuildMeso/Correct_mesostic_text_returned_for_APOD_source in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestGetAPOD in github.com/maroda/hpschd" />
         <item itemvalue="Go Test.TestMesostic_ParseSpine in github.com/maroda/hpschd" />
-        <item itemvalue="Go Test.TestMesostic_ParseSpine/Creates_spine_string_(whitespace_included) in github.com/maroda/hpschd" />
-        <item itemvalue="Go Test.TestMesostic_ParseSpine/Creates_spine_string_with_no_whitespace in github.com/maroda/hpschd" />
       </list>
     </recent_temporary>
   </component>
@@ -264,7 +266,8 @@
     <MESSAGE value="refactor spine and line" />
     <MESSAGE value="new mesostic engine" />
     <MESSAGE value="v2 APOD works, API broken" />
-    <option name="LAST_COMMIT_MESSAGE" value="v2 APOD works, API broken" />
+    <MESSAGE value="Enable whitespace for spinestring" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enable whitespace for spinestring" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
