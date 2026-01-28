@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"go.opentelemetry.io/otel"
 )
 
 const (
@@ -49,7 +52,10 @@ var sharedHTTPClient = &http.Client{
 
 // TickerAPOD takes a frequency in seconds (freq) and runs GetAPOD
 // This is a method of the ServePoems struct that does the data handling
-func (sp *ServePoems) TickerAPOD() {
+func (sp *ServePoems) TickerAPOD(ctx context.Context) {
+	ctx, span := otel.Tracer("apod/machine").Start(ctx, "TickerAPOD")
+	defer span.End()
+
 	// NASA official Astronomy Picture of the Day endpoint URL using NASA's demo API key
 	apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
 	apodnow := "https://api.nasa.gov/planetary/apod?api_key=" + apiKey
@@ -60,8 +66,9 @@ func (sp *ServePoems) TickerAPOD() {
 	fs := RealFS{}
 
 	// The first time this runs, it fetches the current default date
-	_, err := GetAPOD(url, fs)
+	_, err := GetAPOD(ctx, url, fs)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("could not get APOD", slog.Any("error", err), slog.String("url", url))
 	}
 
@@ -69,10 +76,11 @@ func (sp *ServePoems) TickerAPOD() {
 		select {
 		case <-sp.Ticker.C:
 			// Randomized dates are used for all subsequent fetches.
-			date := rndDate(time.Now().UnixNano())
+			date := rndDate()
 			url = "https://api.nasa.gov/planetary/apod?date=" + date + "&api_key=" + apiKey
-			_, err = GetAPOD(url, fs)
+			_, err = GetAPOD(ctx, url, fs)
 			if err != nil {
+				span.RecordError(err)
 				slog.Error("could not get APOD", slog.Any("error", err), slog.String("url", url))
 			}
 		}
@@ -81,9 +89,13 @@ func (sp *ServePoems) TickerAPOD() {
 
 // SingleFetchWithClient handles the messy business of the HTTP connection
 // and is testable with dependency injection, called by SingleFetch
-func SingleFetchWithClient(url string, c HTTPClient) (int, []byte, error) {
+func SingleFetchWithClient(ctx context.Context, url string, c HTTPClient) (int, []byte, error) {
+	ctx, span := otel.Tracer("apod/machine").Start(ctx, "SingleFetchWithClient")
+	defer span.End()
+
 	resp, err := c.Get(url)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Fetch Error", slog.Any("Error", err))
 		return 0, nil, err
 	}
@@ -92,15 +104,11 @@ func SingleFetchWithClient(url string, c HTTPClient) (int, []byte, error) {
 	// Accepting this because of how difficult it is to mock
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Could not read body", slog.Any("Error", err))
 		return 0, nil, err
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			slog.Error("Close Error", slog.Any("Error", err))
-			return
-		}
-	}()
+	defer func() { _ = resp.Body.Close() }()
 
 	return resp.StatusCode, body, err
 }
@@ -109,8 +117,8 @@ func SingleFetchWithClient(url string, c HTTPClient) (int, []byte, error) {
 // This uses a Shared HTTP Client:
 // - to reuse existing endpoint connections
 // - to avoid stale connections that eat up OS FDs
-func SingleFetch(url string) (int, []byte, error) {
-	return SingleFetchWithClient(url, sharedHTTPClient)
+func SingleFetch(ctx context.Context, url string) (int, []byte, error) {
+	return SingleFetchWithClient(ctx, url, sharedHTTPClient)
 }
 
 // FileSystem is for operating with local configs and/or data.
@@ -140,9 +148,13 @@ func (fs RealFS) Stat(name string) (os.FileInfo, error) {
 // i.e. it's already been created. (see: /if !created/ and the recursive func )
 // That type of functionality should be added in here, so we
 // get the continuously updating random URL dates.
-func GetAPOD(url string, fs FileSystem) (string, error) {
-	_, body, err := SingleFetch(url)
+func GetAPOD(ctx context.Context, url string, fs FileSystem) (string, error) {
+	ctx, span := otel.Tracer("apod/machine").Start(ctx, "GetAPOD")
+	defer span.End()
+
+	_, body, err := SingleFetch(ctx, url)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Fetch Error", slog.Any("Error", err))
 		return "", fmt.Errorf("fetch url error: %s", url)
 	}
@@ -151,11 +163,13 @@ func GetAPOD(url string, fs FileSystem) (string, error) {
 	dd := &DataAPOD{}
 	err = json.Unmarshal(body, dd)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Unmarshal Error", slog.Any("Error", err))
 		return "", fmt.Errorf("unmarshal url error: %s", url)
 	}
 	title := cleanString(dd.Title)            // Removes punctuation, does not remove whitespace
 	m := NewMesostic(title, string(body), dd) // Removes whitespace for the spine string
+	// TODO: Pick up trace here, NewMesostic will need a ctx.
 
 	// When it needs to write directly to the struct, a lock is required
 	m.MU.Lock()
@@ -169,6 +183,7 @@ func GetAPOD(url string, fs FileSystem) (string, error) {
 	// Write the file
 	filename := fmt.Sprintf("store/%s__%s", m.Date, strings.ReplaceAll(title, " ", "_"))
 	if err = fs.WriteFile(filename, []byte(mesostic), 0644); err != nil {
+		span.RecordError(err)
 		slog.Error("Failed to write mesostic", slog.Any("error", err), slog.String("filename", filename))
 		return "", fmt.Errorf("write file error: %s", filename)
 	}

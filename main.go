@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -38,11 +39,16 @@ func init() {
 }
 
 func main() {
+	// Start OpenTelemetry Trace Provider
+	tp, err := NewTraceProviderOTEL()
+	if err != nil {
+		slog.Warn("Could not start trace provider, continuing...", slog.Any("error", err))
+	}
+	defer tp.Shutdown(context.Background())
+
 	// Runtime Flags
 	nofetch := flag.Bool("nofetch", false, "Do not start NASA APOD cronjob")
 	port := flag.String("port", "9876", "Server port")
-
-	// Parse Flags
 	flag.Parse()
 
 	// Init data locations
@@ -66,8 +72,9 @@ func main() {
 	defer sp.Ticker.Stop()
 
 	// Start NASA APOD fetching in background (unless disabled)
+	ctx := context.Background()
 	if !*nofetch {
-		go sp.TickerAPOD()
+		go sp.TickerAPOD(ctx)
 	}
 
 	// Start v2 API server (blocking)

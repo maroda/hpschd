@@ -31,23 +31,25 @@ var (
 )
 
 func TestGetAPOD(t *testing.T) {
+	ctx := context.Background()
 	mockWWW := makeMockWebServBody(0*time.Millisecond, testApodJSON)
 	mockFS := MockFS{}
 	want := "first as sphEr"
 
-	got, err := GetAPOD(mockWWW.URL, mockFS)
+	got, err := GetAPOD(ctx, mockWWW.URL, mockFS)
 	assertError(t, err, nil)
 	assertStringContains(t, got, want)
 }
 
 // TestSingleFetch should handle single URLs
 func TestSingleFetch(t *testing.T) {
+	ctx := context.Background()
 	mockWWW := makeMockWebServBody(0*time.Millisecond, "craquemattic")
 	urlWWW := mockWWW.URL
 
 	t.Run("Fetches a single URL", func(t *testing.T) {
 		want := "craquemattic"
-		_, get, err := SingleFetch(urlWWW)
+		_, get, err := SingleFetch(ctx, urlWWW)
 
 		got := string(get)
 		assertError(t, err, nil)
@@ -55,7 +57,7 @@ func TestSingleFetch(t *testing.T) {
 	})
 
 	t.Run("Returns Status 200", func(t *testing.T) {
-		got, _, _ := SingleFetch(urlWWW)
+		got, _, _ := SingleFetch(ctx, urlWWW)
 		assertStatus(t, got, 200)
 	})
 
@@ -63,13 +65,13 @@ func TestSingleFetch(t *testing.T) {
 	mockWWW.Close()
 
 	t.Run("Returns Error after Server Close", func(t *testing.T) {
-		_, _, got := SingleFetch(urlWWW)
+		_, _, got := SingleFetch(ctx, urlWWW)
 		assertGotError(t, got)
 		fmt.Println(got)
 	})
 
 	t.Run("Returns Error after Host Unreachable", func(t *testing.T) {
-		_, _, err := SingleFetch("http://badhost:4420")
+		_, _, err := SingleFetch(ctx, "http://badhost:4420")
 		assertGotError(t, err)
 		assertStringContains(t, err.Error(), "no such host")
 	})
@@ -80,7 +82,7 @@ func TestSingleFetch(t *testing.T) {
 		}))
 		defer server.Close()
 
-		statusCode, _, err := SingleFetch(server.URL)
+		statusCode, _, err := SingleFetch(ctx, server.URL)
 		assertStatus(t, statusCode, 500)
 		assertError(t, err, nil)
 	})
@@ -89,8 +91,9 @@ func TestSingleFetch(t *testing.T) {
 }
 
 func TestSingleFetchWithClient_Timeout(t *testing.T) {
+	ctx := context.Background()
 	c := &mockTimeoutClient{}
-	_, _, err := SingleFetchWithClient("http://test", c)
+	_, _, err := SingleFetchWithClient(ctx, "http://test", c)
 	assertGotError(t, err)
 }
 

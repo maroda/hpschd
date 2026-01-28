@@ -11,22 +11,18 @@
 package main
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"io/fs"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
 // rndDate ::: Produce a random date in the format YYYY-MM-DD.
-// Note: salt parameter is unused with math/rand/v2 (auto-seeded), kept for API compatibility.
-func rndDate(salt int64) string {
-
+func rndDate() string {
 	// rand ranges are [0,r)
 	rMi := 20 // Millinium
 	rYr := 20 // Years
@@ -127,6 +123,7 @@ func readMesoFile(f *string) string {
 	return string(mesoBuf)
 }
 
+/*
 // apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.
 // The return values are the filename and whether the function wrote a new file.
 func apodNew(sp *string, da *string, me *string) (string, bool) {
@@ -158,6 +155,8 @@ func apodNew(sp *string, da *string, me *string) (string, bool) {
 	return fP, true
 }
 
+*/
+
 // fileTmp ::: Take a source string and place it in a file name after the spinestring.
 // This only creates the file by a straight byte copy.
 // Calling functions are responsible for file deletion when finished.
@@ -173,6 +172,7 @@ func fileTmp(sp *string, so *string) string {
 	return fN
 }
 
+/*
 // nasaNewREAD ::: Consume the current filename for the current NASA APOD Mesostic.
 // No new data returns the string 'HPSCHD'
 func nasaNewREAD() string {
@@ -198,3 +198,5 @@ func shakey(k string) string {
 	hash := fmt.Sprintf("%x", bash)
 	return hash
 }
+
+*/
