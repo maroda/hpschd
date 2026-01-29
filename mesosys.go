@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"reflect"
@@ -9,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+
+	"go.opentelemetry.io/otel"
 )
 
 /*
@@ -37,7 +41,10 @@ type Mesostic struct {
 	Poem       string      `json:"poem"`       // Final multi-line poem
 }
 
-func NewMesostic(title, source string, data interface{}) *Mesostic {
+func NewMesostic(ctx context.Context, title, source string, data interface{}) *Mesostic {
+	ctx, span := otel.Tracer("mesostic/new").Start(ctx, "NewMesostic")
+	defer span.End()
+
 	m := &Mesostic{
 		MU:         sync.Mutex{},
 		Date:       "",
@@ -60,14 +67,17 @@ func NewMesostic(title, source string, data interface{}) *Mesostic {
 	newspine := envVar("HPSCHD_SPINESTRING", "")
 
 	// Keep whitespace as the default
-	m.ParseSpine(newspine, true)
-	m.ParseSourceJSON(data)
+	m.ParseSpine(ctx, newspine, true)
+	m.ParseSourceJSON(ctx, data)
 	return m
 }
 
 // BuildMeso takes the populated struct and builds the final poem
 // replaces mesoMain
-func (m *Mesostic) BuildMeso() string {
+func (m *Mesostic) BuildMeso(ctx context.Context) string {
+	ctx, span := otel.Tracer("mesostic/mesosys").Start(ctx, "BuildMeso")
+	defer span.End()
+
 	m.MU.Lock()
 	defer m.MU.Unlock()
 
@@ -79,7 +89,7 @@ func (m *Mesostic) BuildMeso() string {
 
 	// Run the lines through a mesostic algorithm
 	for _, sl := range sourceLines {
-		if m.FormatLine(sl) {
+		if m.FormatLine(ctx, sl) {
 			// Increase the index address, wrapping if it reaches the end of the Spine String
 			m.SpineIdx = (m.SpineIdx + 1) % len(m.Spine)
 		} else {
@@ -91,7 +101,7 @@ func (m *Mesostic) BuildMeso() string {
 	}
 
 	// Pull all elements together into final mesostic lines
-	m.FormatFullLines()
+	m.FormatFullLines(ctx)
 
 	// Build and return the full test
 	for _, ml := range m.MLines {
@@ -103,7 +113,10 @@ func (m *Mesostic) BuildMeso() string {
 
 // FormatFullLines builds the final line entries
 // Caller holds the lock
-func (m *Mesostic) FormatFullLines() bool {
+func (m *Mesostic) FormatFullLines(ctx context.Context) bool {
+	ctx, span := otel.Tracer("mesostic/mesosys").Start(ctx, "FormatFullLines")
+	defer span.End()
+
 	var line string
 
 	for i, lw := range m.LineWest {
@@ -128,8 +141,12 @@ func isStruct(i interface{}) bool {
 // FormatLine creates the mesostic line,
 // without operating on the Spine String itself
 // Caller holds the lock
-func (m *Mesostic) FormatLine(line string) bool {
+func (m *Mesostic) FormatLine(ctx context.Context, line string) bool {
+	ctx, span := otel.Tracer("mesostic/mesosys").Start(ctx, "FormatLine")
+	defer span.End()
+
 	if len(m.Spine) == 0 {
+		span.RecordError(fmt.Errorf("no spinestring found"))
 		slog.Error("No spinestring found!",
 			slog.String("line", line),
 			slog.String("date", m.Date),
@@ -209,17 +226,23 @@ func wider(a, b int) int {
 
 // ParseSourceJSON validates and transforms the raw text into usable entry text (???)
 // It takes a pointer to the struct for decoding.
-func (m *Mesostic) ParseSourceJSON(ps interface{}) bool {
+func (m *Mesostic) ParseSourceJSON(ctx context.Context, ps interface{}) bool {
+	ctx, span := otel.Tracer("mesostic/new").Start(ctx, "ParseSourceJSON")
+	defer span.End()
+
 	m.MU.Lock()
 	defer m.MU.Unlock()
 
 	if !isStruct(ps) {
-		slog.Error("Not a recognized decode target for JSON source")
+		err := fmt.Errorf("not a recognized JSON target")
+		span.RecordError(err)
+		slog.Error("not a recognized JSON target")
 		return false
 	}
 
 	decoder := json.NewDecoder(m.Source)
 	if err := decoder.Decode(&ps); err != nil {
+		span.RecordError(err)
 		slog.Error("Mesostic.JSON.Decoder Error", slog.Any("error", err))
 		return false
 	}
@@ -230,7 +253,10 @@ func (m *Mesostic) ParseSourceJSON(ps interface{}) bool {
 // ParseSpine changes the Title into a lowercase slice without whitespace
 //
 //	When set to a non-empty value, /ss/ overrides m.Title
-func (m *Mesostic) ParseSpine(ss string, keepSpace bool) bool {
+func (m *Mesostic) ParseSpine(ctx context.Context, ss string, keepSpace bool) bool {
+	ctx, span := otel.Tracer("mesostic/new").Start(ctx, "ParseSpine")
+	defer span.End()
+
 	m.MU.Lock()
 	defer m.MU.Unlock()
 

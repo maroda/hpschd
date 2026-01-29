@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func init() {
@@ -77,15 +79,18 @@ func main() {
 		go sp.TickerAPOD(ctx)
 	}
 
-	// Start v2 API server (blocking)
+	// Start v2 API server (blocking) with OTEL wrapper
 	addr := ":" + *port
 	sp.Server = &http.Server{
-		Addr:    addr,
-		Handler: sp.SetupMux(),
+		Addr: addr,
+		Handler: otelhttp.NewHandler(sp.SetupMux(), "MesosticAPIV2",
+			otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+				return r.Method + " " + r.URL.Path
+			})),
 	}
 
 	slog.Info("Starting v2 server", slog.String("addr", addr))
-	if err := sp.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err = sp.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("Server failed", slog.Any("error", err))
 		os.Exit(1)
 	}

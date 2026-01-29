@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type DataAPI struct {
@@ -31,7 +34,6 @@ type ServePoems struct {
 func (sp *ServePoems) SetupMux() *mux.Router {
 	r := mux.NewRouter()
 
-	// r.Handle("/metrics", promhttp.Handler())
 	r.HandleFunc("/", sp.HomeHandler)
 	r.HandleFunc("/healthz", sp.HealthzHandler)
 
@@ -53,6 +55,10 @@ type HomeMesostic struct {
 
 // HomeHandler displays the new mesostic on the homepage
 func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx, span := otel.Tracer("mesostic/web").Start(ctx, "Homepage")
+	defer span.End()
+
 	hometmpl := template.Must(template.ParseFiles("public/index.html"))
 
 	// This is created every time the homepage is requested
@@ -68,11 +74,11 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fullTitle := nameParts[1:]
 
-	// Update the struct
+	// Update the struct, locking during file access
 	hm.mu.Lock()
 	hm.Title = strings.TrimSpace(strings.Join(fullTitle, " "))
 	hm.ADate = fullDate
-	hm.Poem = readMesoFile(&rndFile) // Load poem from mesostic file
+	hm.Poem = readMesoFile(ctx, &rndFile) // Load poem from mesostic file
 	hm.mu.Unlock()
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -81,6 +87,7 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Write the HTML via template
 	err := hometmpl.Execute(w, hm)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("cannot render html")
 		http.Error(w, "cannot render html", http.StatusInternalServerError)
 	}
@@ -88,6 +95,10 @@ func (sp *ServePoems) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetJSON returns a plaintext mesostic from the submitted JSON
 func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx, span := otel.Tracer("mesostic/api").Start(ctx, "GetJSON")
+	defer span.End()
+
 	di := &DataAPI{}
 
 	// Rate limit first, then read the body for processing
@@ -95,6 +106,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxbytes)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("body unreadable or exceeded limit")
 		http.Error(w, "body unreadable or exceeded limit", http.StatusBadRequest)
 		return
@@ -103,6 +115,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, di)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("cannot unmarshal body")
 		http.Error(w, "cannot unmarshal body", http.StatusInternalServerError)
 		return
@@ -110,6 +123,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 	// Validate: If either these two fields are not filled, it's a bad request
 	if di.SpineString == "" || di.Text == "" {
+		span.AddEvent("empty text or spinestring", trace.WithAttributes(attribute.String("spinestring", di.SpineString)))
 		slog.Error("empty text or spinestring")
 		http.Error(w, "empty text or spinestring", http.StatusBadRequest)
 		return
@@ -117,7 +131,7 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 
 	title := di.SpineString
 	os.Unsetenv("HPSCHD_SPINESTRING") // The API overrides this setting
-	m := NewMesostic(title, string(body), di)
+	m := NewMesostic(ctx, title, string(body), di)
 
 	m.MU.Lock()
 	m.SourceTxt = di.Text
@@ -127,13 +141,14 @@ func (sp *ServePoems) GetJSON(w http.ResponseWriter, r *http.Request) {
 	// HomeMesostic is used, identical to how it's served on the homepage
 	mesojson := &HomeMesostic{
 		Title: title,
-		Poem:  m.BuildMeso(),
+		Poem:  m.BuildMeso(ctx),
 	}
 
 	// Write the mesostic back
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(mesojson)
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Encode Error", slog.Any("error", err))
 		http.Error(w, "encode error", http.StatusInternalServerError)
 		return

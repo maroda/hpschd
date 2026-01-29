@@ -156,19 +156,28 @@ func GetAPOD(ctx context.Context, url string, fs FileSystem) (string, error) {
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("Fetch Error", slog.Any("Error", err))
-		return "", fmt.Errorf("fetch url error: %s", url)
+		return "", err
 	}
 
-	// Each "Get____" function will have its own defined structure
 	dd := &DataAPOD{}
 	err = json.Unmarshal(body, dd)
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("Unmarshal Error", slog.Any("Error", err))
-		return "", fmt.Errorf("unmarshal url error: %s", url)
+		return "", err
 	}
-	title := cleanString(dd.Title)            // Removes punctuation, does not remove whitespace
-	m := NewMesostic(title, string(body), dd) // Removes whitespace for the spine string
+
+	// Protect against cases where APOD delivered incorrect data
+	// If the Date field isn't filled, the expected API JSON was not sent.
+	if dd.Date == "" {
+		err = fmt.Errorf("no date found for %s", url)
+		span.RecordError(err)
+		slog.Error("Fetch Error", slog.Any("Error", err))
+		return "", err
+	}
+
+	title := cleanString(dd.Title)                 // Removes punctuation, does not remove whitespace
+	m := NewMesostic(ctx, title, string(body), dd) // Removes whitespace for the spine string
 	// TODO: Pick up trace here, NewMesostic will need a ctx.
 
 	// When it needs to write directly to the struct, a lock is required
@@ -178,14 +187,14 @@ func GetAPOD(ctx context.Context, url string, fs FileSystem) (string, error) {
 	m.MU.Unlock()
 
 	// When using methods from the struct, no lock is used
-	mesostic := m.BuildMeso()
+	mesostic := m.BuildMeso(ctx)
 
 	// Write the file
 	filename := fmt.Sprintf("store/%s__%s", m.Date, strings.ReplaceAll(title, " ", "_"))
 	if err = fs.WriteFile(filename, []byte(mesostic), 0644); err != nil {
 		span.RecordError(err)
 		slog.Error("Failed to write mesostic", slog.Any("error", err), slog.String("filename", filename))
-		return "", fmt.Errorf("write file error: %s", filename)
+		return "", err
 	}
 
 	slog.Info("apod mesostic stored", slog.String("filename", filename))

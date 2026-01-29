@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"testing"
 )
 
 func TestMesostic_ParseSpine(t *testing.T) {
 	t.Run("Creates spine string (whitespace included)", func(t *testing.T) {
+		ctx := context.Background()
 		mesostic := Mesostic{
 			Title: "music has the rights to children",
 		}
 
 		newspine := envVar("HPSCHD_SPINESTRING", "")
-		mesostic.ParseSpine(newspine, true)
+		mesostic.ParseSpine(ctx, newspine, true)
 
 		if len(mesostic.Spine) < 1 {
 			t.Errorf("Spine should have more characters")
@@ -25,12 +27,13 @@ func TestMesostic_ParseSpine(t *testing.T) {
 	})
 
 	t.Run("Creates spine string with no whitespace", func(t *testing.T) {
+		ctx := context.Background()
 		mesostic := Mesostic{
 			Title: "music has the rights to children",
 		}
 
 		newspine := envVar("HPSCHD_SPINESTRING", "")
-		mesostic.ParseSpine(newspine, false)
+		mesostic.ParseSpine(ctx, newspine, false)
 
 		if len(mesostic.Spine) < 1 {
 			t.Errorf("Spine should have more characters")
@@ -46,9 +49,10 @@ func TestMesostic_ParseSpine(t *testing.T) {
 
 func TestMesostic_BuildMeso(t *testing.T) {
 	t.Run("Correct mesostic text returned for APOD source", func(t *testing.T) {
+		ctx := context.Background()
 		title := "The Millennium that Defines Universe"
 		ae := &DataAPOD{}
-		meso := NewMesostic(title, testApodJSON, ae)
+		meso := NewMesostic(ctx, title, testApodJSON, ae)
 		want := "first as sphEr"
 
 		gotae, ok := meso.SourceData.(*DataAPOD)
@@ -59,11 +63,12 @@ func TestMesostic_BuildMeso(t *testing.T) {
 		meso.SourceTxt = gotae.Explaination
 		meso.MU.Unlock()
 
-		got := meso.BuildMeso()
+		got := meso.BuildMeso(ctx)
 		assertStringContains(t, got, want)
 	})
 
 	t.Run("Correct mesostic text returned for DataAPI source", func(t *testing.T) {
+		ctx := context.Background()
 		apiJSON = `{"text": "the quick brown; fox jumps over; the lazy dog", "spinestring": "craque"}`
 		want := `
       the quiCk b
@@ -72,7 +77,7 @@ fox jumps oveR
 
 		title := "craque"
 		ae := &DataAPI{}
-		meso := NewMesostic(title, apiJSON, ae)
+		meso := NewMesostic(ctx, title, apiJSON, ae)
 
 		gotae, ok := meso.SourceData.(*DataAPI)
 		if !ok {
@@ -82,7 +87,7 @@ fox jumps oveR
 		meso.SourceTxt = gotae.Text
 		meso.MU.Unlock()
 
-		got := meso.BuildMeso()
+		got := meso.BuildMeso(ctx)
 		if got != want {
 			t.Errorf("Expected:\n%s\n\nGot:\n%s", want, got)
 		}

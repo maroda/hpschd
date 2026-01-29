@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	// The entry for 2000-01-01 is a "guaranteed entry"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"time"
 )
 
+// testApodJSON is the schema of how data is returned from the NASA APOD API
 var (
 	testApodJSON = `
 {
