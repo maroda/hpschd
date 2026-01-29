@@ -34,7 +34,7 @@ COPY --from=builder /build/hpschd .
 COPY public/ ./public/
 
 # Expose the application port
-EXPOSE 9999
+EXPOSE 9876
 
 # Run the application
 CMD ["./hpschd"]

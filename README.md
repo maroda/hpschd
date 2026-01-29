@@ -1,50 +1,67 @@
-# Mesostic poetry API
+# Mesostic Poetry Generator
 
 [![Release](https://github.com/maroda/hpschd/actions/workflows/release.yml/badge.svg)](https://github.com/maroda/hpschd/actions/workflows/release.yml)
 
-**The Writing-Through Mesostic Generator**
+**The Golang Writing-Through Mesostic Engine**
 
-A text file for input will be transmogrified into a piece of Mesostic poetry using a configured "Spine String".
+This is my humble attempt at turning John Cage's "mesostic" writing style into a working API that can create automated poetry.
 
-## Usage
+## JSON API
 
-The default webserver shows a mesostic built from fetches made to the [NASA Astronomy Picture of the Day (APOD)](https://apod.nasa.gov/apod/) API.
-This uses the following API endpoint, which can be used for any blob of text.
-
-### JSON API
-
-```zsh
-curl www.hpschd.xyz:9999/app -d '{"text": "the quick brown\nfox jumps over\nthe lazy dog\n", "spinestring": "cra"}'
+The Mesostic Engine can be used directly via the API:
+```shell
+curl localhost:9876/app -d '{
+  "text": "Any long string of text that will be the content of the poem",
+  "spinestring": "The capitalized text that runs through the middle"
+}'
 ```
 
 For example:
-
 ```zsh
->>> curl localhost:9999/app -d '{"text": "the quick brown\nfox jumps over\nthe lazy dog\n", "spinestring": "cra"}'
+>>> curl -s localhost:9876/app -d '{"text": "the quick brown; fox jumps over; the lazy dog", "spinestring": "cra"}' | jq
+{
+  "title": "cra",
+  "date": "",
+  "poem": "\n      the quiCk b\nfox jumps oveR\n        the lAzy dog"
+}
+```
+
+Printed out:
+```text
       the quiCk b
 fox jumps oveR
         the lAzy dog
 ```
+
+## Homepage
+
+This is a simple webserver that displays a mesostic built from the [NASA Astronomy Picture of the Day (APOD)](https://apod.nasa.gov/apod/) API.
+It retrieves its content from a local datastore of mesostics.
+This store is filled by an automated process that queries the APOD API for a random date.
 
 ## Operations
 
 To run this and display a Mesostic on the homepage, you will need an APOD API Key.
 Visit [NASA's API pages](https://api.nasa.gov) to sign up and get a free key.
 
+### Environment Variables
+- `NASA_API_KEY` should be set to your APOD API key. If not set, the app defaults to NASA's test key ("DEMO_KEY") that has heavier rate limiting than a normal user.
+- `HPSCHD_APOD_FREQUENCY` can be set to a duration in seconds (default is "88").
+
+
+Place this in `./.env`:
+```zsh
+NASA_API_KEY=<KEY>
+HPSCHD_APOD_FREQUENCY=88
+```
+
 ### Run Docker Locally
-
-First set your APOD API key in the environment. If this is not set, it will default to NASA's test key: `DEMO_KEY`
-
+Fetch the `latest` version and run as a local container:
 ```zsh
-export NASA_API_KEY=<KEY>
+docker run --env-file ./.env --rm --name hpschd -p 9876:9876 ghcr.io/maroda/hpschd:latest
 ```
 
-Fetch the `latest` version from GitHub Container Registry and run as a local container:
-```zsh
-docker run --rm --name hpschd -p 9999:9999 ghcr.io/maroda/hpschd:latest
-```
-
-Now browse to <http://localhost:9999> and see an APOD mesostic!
+Now browse to <http://localhost:9876> and see an APOD mesostic!
 
 ### Docker Compose
 
@@ -55,11 +72,17 @@ services:
     image: ghcr.io/maroda/hpschd:latest
     container_name: hpschd
     ports:
-      - "9999:9999"
+      - "9876:9876"
     environment:
       - NASA_API_KEY=<KEY>
+      - HPSCHD_APOD_FREQUENCY=88
   restart: unless-stopped
 ```
+
+### Disable APOD Fetching
+The API can be used alone by running with the `-nofetch` flag.
+This disables new APOD fetches, but does not remove any existing ones,
+so visits to the homepage will still show a random mesostic from the current APOD collection.
 
 ### Release Process
 
@@ -80,12 +103,19 @@ The project uses GitHub Actions with GoReleaser for automated releases:
 
 See the [Release workflow](.github/workflows/release.yml) and [GoReleaser config](.goreleaser.yaml) for details.
 
-## Mesostics
+## What are Mesostics?
+An _acrostic_ shows a String of letters down one side of the text.
 
-An acrostic shows a String of letters down one side of the text.
 A **mesostic** shows a String of letters down the _middle_ of the text.
 
-This vertical line of text is capitalized and centered, so we call that a _Spine String_.
+> The [Mesostic](https://en.wikipedia.org/wiki/Mesostic) was first developed extensively by **John Cage**.
+> His book [**M**](https://en.wikipedia.org/wiki/M_(John_Cage_book)) contains many of them,
+> including a favorite "62 Mesostics re Merce Cunningham" where
+> individual letters appear in typeface styles derived by chance operations
+> and performed as music by a singer.
+
+### Mesostic Algorithms
+The vertical line of text is capitalized and centered, we call that a _Spine String_.
 Locating which letter in a line of entry-text to center on the Spine String happens using one of three algorithms:
 
 1. **50% Mesostic**: The Spine String Letter is unique between itself and the previous one. So if this letter is K, there cannot be a K between itself and the previous letter (which also would not be a K).
@@ -95,31 +125,42 @@ Locating which letter in a line of entry-text to center on the Spine String happ
 John Cage would run large amounts of text through a Mesostic algorithm to create poetry.
 The entry-text forms the lines of poetry and the Spine String (our term) forms the vertical letters down the middle.
 
-> The **50% Mesostic** is what _hpschd_ uses to produce the most output from small blocks of text, like the APOD descriptions.
-> 
-> The algorithm is fuzzy and can lead to characters causing weird shifts, very long lines, or empty space.
->
-> This is intentional.
+### HPSCHD Mesostics
+Here's one poem the API created from the 2004-01-27 APOD:
+```text
+Opportunity on Mars
 
-## Chance Operations
-There is a two-phase operation:
 
-1. Under certain conditions the engine will obtain new Mesostics by creating a randomized date string and requesting the APOD from that date.
-2. These are stored locally in the special runtime directory **`/store/`**.
-3. When the homepage is requested a random selection from the runtime directory is chosen to display.
 
-This way the visitor is never waiting on the fetch itself, and will always get something that has been previously fetched.
-This means repeats will happen, but the more time the app runs to make new fetches, the more are saved in the cache.
+                      yOu've just w
+the surrounding landscaPe is barren
+          you transmit Pictures that are instantly rebr
+                      yOu a
+       you seek adventuRe
+       your mission is To explore 
+                     yoU have six wheels
+                      oNe arm
+               surroundIng you
+                    picTured above
+                       You
+```
+The **50% Mesostic** is used to produce good output from small blocks of text,
+like the APOD description shown here where the title is used as the Spine String.
+
+To create more interesting poetry, some text is traded for whitespace.
+Future versions will allow for word density controls.
+
+## Release Notes
+- The LICENSE file has been repaired and set for v2 forward.
+- There may be bugs in the way the API consumes text.
+For instance, embedded control characters may create unpredictable results.
+- No controllable mesostic options (like rule strictness, word density) yet.
 
 ## Other Implementations
 
 Mesostic creation algorithms in the wild!
+These have controllable options like word density and rule selection.
 
 - Nicki Hoffman (python) ::: http://vyh.pythonanywhere.com/psmeso/
 - UPenn team (javascript) ::: http://mesostics.sas.upenn.edu/
-
-## Acknowledgements
-
-This algorithm was written by a human (me), but the "way to write a Mesostic" was mostly work by **John Cage**.
-Claude Code has been used to assist with testing and refactoring.
 

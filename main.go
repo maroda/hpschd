@@ -1,100 +1,96 @@
 /*
 
-	HPSCHD Main
+	HPSCHD Main - v2
 
 */
 
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+func init() {
+	// Init data locations
+	// store ::: ephemeral mesostic cache
+	localDirs([]string{"store"})
+
+	// Set up slog with JSON handler for structured logging
+	// Default to Info level, can be overridden with HPSCHD_LOG_LEVEL env var
+	logLevel := slog.LevelInfo
+	if level := os.Getenv("HPSCHD_LOG_LEVEL"); level != "" {
+		switch level {
+		case "DEBUG":
+			logLevel = slog.LevelDebug
+		case "WARN":
+			logLevel = slog.LevelWarn
+		case "ERROR":
+			logLevel = slog.LevelError
+		}
+	}
+
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	})
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+}
+
 func main() {
-	// Zerolog
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	// Start OpenTelemetry Trace Provider
+	tp, err := NewTraceProviderOTEL()
+	if err != nil {
+		slog.Warn("Could not start trace provider, continuing...", slog.Any("error", err))
+	}
+	defer tp.Shutdown(context.Background())
 
 	// Runtime Flags
-	debug := flag.Bool("debug", false, "Log Level: DEBUG")
 	nofetch := flag.Bool("nofetch", false, "Do not start NASA APOD cronjob")
-
-	// Parse Flags
+	port := flag.String("port", "9876", "Server port")
 	flag.Parse()
 
-	// Flag Options
-	if *debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Info().Msg("Log level set to DEBUG")
-	}
+	sp := &ServePoems{}
 
-	/*
-		Confirm / initiate data locations
-
-		store ::: ephemeral mesostic cache
-		txrx ::: tmp scratch files
-	*/
-	datadirs := []string{"store", "txrx"}
-	localDirs(datadirs)
-
-	// Fetching the NASA APOD for the homepage display is default behavior.
-	// The 'nofetch' flag turns this off.
-	if *nofetch {
-		log.Info().Msg("Running with integrated NASA APOD fetch disabled.")
-	} else {
-		// Fetch initial APOD mesostic to populate store before starting web server
-		// This prevents ENOENT errors when users visit homepage before cronjob runs
-		apiKey := envVar("NASA_API_KEY", "DEMO_KEY")
-		apodURL := "https://api.nasa.gov/planetary/apod?api_key=" + apiKey
-
-		log.Info().Msg("Fetching initial NASA APOD mesostic...")
-		NASAetl(apodURL)
-		log.Info().Msg("Initial mesostic created, starting cronjob.")
-
-		timer := envVar("HPSCHD_TIMER", "77")
-		timerI, err := strconv.Atoi(timer)
+	// Start NASA APOD fetching in background (unless disabled)
+	if !*nofetch {
+		// Configure ticker interval for NASA APOD fetching
+		t := envVar("HPSCHD_APOD_FREQUENCY", "88")
+		ti, err := strconv.Atoi(t)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to parse HPSCHD_TIMER")
+			slog.Error("unreadable frequency")
 		}
 
-		// Start up ticker for fetching source text to display on the homepage as a Mesostic.
-		// The NASA APOD API has a query limit of 1k/hr, every 15s is 240/hr.
-		// TODO: There is a possible retry bug here...
-		//		increasingly EXISTENT (existing) mesostics trip up a fast fetch (e.g. 15s)
-		//		try ~11m for something that keeps things fresh enough
-		//		but will hopefully avoid the EXISTENT pileup
-		go fetchTicker(uint64(timerI))
+		tid := time.Duration(ti) * time.Second
+		ctx := context.Background()
+		sp.Ticker = time.NewTicker(tid)
+		defer sp.Ticker.Stop()
+
+		go sp.TickerAPOD(ctx)
 	}
 
-	// Prometheus
-	prometheus.MustRegister(hpschdPingCount)
-	prometheus.MustRegister(hpschdHomeTimer)
-	prometheus.MustRegister(hpschdJsubTimer)
-	prometheus.MustRegister(hpschdFsubTimer)
-	prometheus.MustRegister(hpschdMesolineTimer)
-	prometheus.MustRegister(hpschdNASAetlTimer)
+	// Create API server with OTEL wrapper around Mux
+	addr := ":" + *port
+	sp.Server = &http.Server{
+		Addr: addr,
+		Handler: otelhttp.NewHandler(sp.SetupMux(), "MesosticAPIV2",
+			otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+				return r.Method + " " + r.URL.Path
+			})),
+	}
 
-	// Deploy the web server
-	rt := mux.NewRouter()
-
-	// Basic Pages
-	rt.Handle("/metrics", promhttp.Handler())
-	rt.HandleFunc("/", homepage)
-	rt.HandleFunc("/ping", ping)
-
-	// API Features
-	api := rt.PathPrefix("/app").Subrouter()
-	api.HandleFunc("", JSubmit).Methods(http.MethodPost)       // JSON submission POST
-	api.HandleFunc("/{arg}", FSubmit).Methods(http.MethodPost) // Form submission POST
-
-	if err := http.ListenAndServe(":9999", rt); err != nil {
-		log.Fatal().Err(err).Msg("startup failed!")
+	// Even if APOD fetching is disabled, the homepage can still serve the contents of /store
+	slog.Info("Starting Mesostic Generation Engine", slog.String("addr", addr))
+	if err = sp.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("Server failed", slog.Any("error", err))
+		os.Exit(1)
 	}
 }

@@ -1,0 +1,95 @@
+package main
+
+import (
+	"context"
+	"testing"
+)
+
+func TestMesostic_ParseSpine(t *testing.T) {
+	t.Run("Creates spine string (whitespace included)", func(t *testing.T) {
+		ctx := context.Background()
+		mesostic := Mesostic{
+			Title: "music has the rights to children",
+		}
+
+		newspine := envVar("HPSCHD_SPINESTRING", "")
+		mesostic.ParseSpine(ctx, newspine, true)
+
+		if len(mesostic.Spine) < 1 {
+			t.Errorf("Spine should have more characters")
+		}
+		if mesostic.Spine[0] != "m" {
+			t.Errorf("Spine does not start with Title character")
+		}
+		if mesostic.Spine[5] != " " {
+			t.Errorf("Spine skipped the space after the first word")
+		}
+	})
+
+	t.Run("Creates spine string with no whitespace", func(t *testing.T) {
+		ctx := context.Background()
+		mesostic := Mesostic{
+			Title: "music has the rights to children",
+		}
+
+		newspine := envVar("HPSCHD_SPINESTRING", "")
+		mesostic.ParseSpine(ctx, newspine, false)
+
+		if len(mesostic.Spine) < 1 {
+			t.Errorf("Spine should have more characters")
+		}
+		if mesostic.Spine[0] != "m" {
+			t.Errorf("Spine does not start with Title character")
+		}
+		if mesostic.Spine[5] != "h" {
+			t.Errorf("Spine does not skip the space after the first word")
+		}
+	})
+}
+
+func TestMesostic_BuildMeso(t *testing.T) {
+	t.Run("Correct mesostic text returned for APOD source", func(t *testing.T) {
+		ctx := context.Background()
+		title := "The Millennium that Defines Universe"
+		ae := &DataAPOD{}
+		meso := NewMesostic(ctx, title, testApodJSON, ae)
+		want := "first as sphEr"
+
+		gotae, ok := meso.SourceData.(*DataAPOD)
+		if !ok {
+			t.Errorf("Source data does not implement DataAPOD")
+		}
+		meso.MU.Lock()
+		meso.SourceTxt = gotae.Explaination
+		meso.MU.Unlock()
+
+		got := meso.BuildMeso(ctx)
+		assertStringContains(t, got, want)
+	})
+
+	t.Run("Correct mesostic text returned for DataAPI source", func(t *testing.T) {
+		ctx := context.Background()
+		apiJSON = `{"text": "the quick brown; fox jumps over; the lazy dog", "spinestring": "craque"}`
+		want := `
+      the quiCk b
+fox jumps oveR
+        the lAzy dog`
+
+		title := "craque"
+		ae := &DataAPI{}
+		meso := NewMesostic(ctx, title, apiJSON, ae)
+
+		gotae, ok := meso.SourceData.(*DataAPI)
+		if !ok {
+			t.Errorf("Source data does not implement DataAPOD")
+		}
+		meso.MU.Lock()
+		meso.SourceTxt = gotae.Text
+		meso.MU.Unlock()
+
+		got := meso.BuildMeso(ctx)
+		if got != want {
+			t.Errorf("Expected:\n%s\n\nGot:\n%s", want, got)
+		}
+	})
+}

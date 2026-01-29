@@ -11,22 +11,21 @@
 package main
 
 import (
-	"crypto/sha1"
+	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 )
 
 // rndDate ::: Produce a random date in the format YYYY-MM-DD.
-// Note: salt parameter is unused with math/rand/v2 (auto-seeded), kept for API compatibility.
-func rndDate(salt int64) string {
-
+func rndDate() string {
 	// rand ranges are [0,r)
 	rMi := 20 // Millinium
 	rYr := 20 // Years
@@ -54,13 +53,14 @@ func rndDate(salt int64) string {
 	return newdate
 }
 
-// envVar ::: Grab a single ENV VAR and provide a fallback configuration.
+// envVar ::: Grab a single ENV VAR with a provided default
+// This will not set an ENV VAR that exists but set to an empty string.
 func envVar(env, alt string) string {
-	url, ext := os.LookupEnv(env)
+	value, ext := os.LookupEnv(env)
 	if !ext {
-		url = alt
+		return alt
 	}
-	return url
+	return value
 }
 
 // ichingMeso ::: Uses chance operations to select an existing NASA APOD Mesostic.
@@ -68,7 +68,6 @@ func ichingMeso(dir string) string {
 	var fileList []string
 	for _, entry := range dirents(dir) {
 		fullPath := filepath.Join(dir, entry.Name())
-		fmt.Println(fullPath)
 		fileList = append(fileList, fullPath)
 	}
 	if fileList == nil {
@@ -112,50 +111,27 @@ func localDirs(ld []string) {
 }
 
 // readMesoFile ::: Open and read the Mesostic
-func readMesoFile(f *string) string {
+// TODO: Refactor to more modern file access
+func readMesoFile(ctx context.Context, f *string) string {
+	ctx, span := otel.Tracer("mesostic/web").Start(ctx, "readMesoFile")
+	defer span.End()
+
 	if len(*f) == 0 {
-		log.Error().Msg("no path given")
-		return "error"
+		err := fmt.Errorf("no file specified")
+		span.RecordError(err)
+		slog.Error("no file specified", slog.Any("error", err))
+		return "ENOENT"
 	}
 
 	var mesoBuf []byte
 	mesoBuf, err := os.ReadFile(*f)
 	if err != nil {
-		log.Error()
+		span.RecordError(err)
+		slog.Error("error reading file", slog.Any("error", err))
+		return "ENOENT"
 	}
 
 	return string(mesoBuf)
-}
-
-// apodNEW ::: Check if a disk file exists in the Mesostic store or create a new one.
-// The return values are the filename and whether the function wrote a new file.
-func apodNew(sp *string, da *string, me *string) (string, bool) {
-	_, _, fu := Envelope()
-
-	mDir := "store"
-	tr := strings.NewReplacer(" ", "_")
-	spn := tr.Replace(*sp)
-	fP := fmt.Sprintf("%s/%s__%s", mDir, *da, spn)
-
-	// NASA API returned a 404
-	if spn == "404" {
-		log.Warn().Str("fu", fu).Msg("404 NOFILE")
-		return fP, false
-	}
-
-	// Mesostic file exists
-	if _, err := os.Stat(fP); err == nil {
-		log.Warn().Str("fu", fu).Msg("EXISTENT")
-		return fP, false
-	}
-
-	// Write data to a new file
-	sB := []byte(*me)
-	err := os.WriteFile(fP, sB, 0644)
-	if err != nil {
-		log.Error()
-	}
-	return fP, true
 }
 
 // fileTmp ::: Take a source string and place it in a file name after the spinestring.
@@ -171,30 +147,4 @@ func fileTmp(sp *string, so *string) string {
 		log.Error()
 	}
 	return fN
-}
-
-// nasaNewREAD ::: Consume the current filename for the current NASA APOD Mesostic.
-// No new data returns the string 'HPSCHD'
-func nasaNewREAD() string {
-	_, _, fu := Envelope()
-
-	// The purpose here is to display the current APOD first,
-	// and random ones subsequently, including the present one.
-	select {
-	case mesoFile := <-nasaNewMESO:
-		log.Info().Str("fu", fu).Msg("Filename from nasaNewMESO consumed")
-		return mesoFile
-	default:
-		log.Info().Str("fu", fu).Msg("No new filename presented, initiate chance operations.")
-		return "HPSCHD"
-	}
-}
-
-// SHA1 for consistent size keys
-func shakey(k string) string {
-	s := sha1.New()
-	s.Write([]byte(k))
-	bash := s.Sum(nil)
-	hash := fmt.Sprintf("%x", bash)
-	return hash
 }
