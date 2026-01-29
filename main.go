@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -19,6 +20,10 @@ import (
 )
 
 func init() {
+	// Init data locations
+	// store ::: ephemeral mesostic cache
+	localDirs([]string{"store"})
+
 	// Set up slog with JSON handler for structured logging
 	// Default to Info level, can be overridden with HPSCHD_LOG_LEVEL env var
 	logLevel := slog.LevelInfo
@@ -53,33 +58,26 @@ func main() {
 	port := flag.String("port", "9876", "Server port")
 	flag.Parse()
 
-	// Init data locations
-	// store ::: ephemeral mesostic cache
-	localDirs([]string{"store"})
-
-	// Configure ticker interval for NASA APOD fetching
-	t := envVar("HPSCHD_APOD_FREQUENCY", "88")
-	ti, err := strconv.Atoi(t)
-	if err != nil {
-		slog.Error("unreadable frequency")
-	}
-	tid := time.Duration(ti) * time.Second
-	if *nofetch {
-		slog.Info("Running with integrated NASA APOD fetch disabled")
-		tid = 0 // Disable ticker
-	}
-
-	// Initialize v2 server with ticker
-	sp := &ServePoems{Ticker: time.NewTicker(tid)}
-	defer sp.Ticker.Stop()
+	sp := &ServePoems{}
 
 	// Start NASA APOD fetching in background (unless disabled)
-	ctx := context.Background()
 	if !*nofetch {
+		// Configure ticker interval for NASA APOD fetching
+		t := envVar("HPSCHD_APOD_FREQUENCY", "88")
+		ti, err := strconv.Atoi(t)
+		if err != nil {
+			slog.Error("unreadable frequency")
+		}
+
+		tid := time.Duration(ti) * time.Second
+		ctx := context.Background()
+		sp.Ticker = time.NewTicker(tid)
+		defer sp.Ticker.Stop()
+
 		go sp.TickerAPOD(ctx)
 	}
 
-	// Start v2 API server (blocking) with OTEL wrapper
+	// Create API server with OTEL wrapper around Mux
 	addr := ":" + *port
 	sp.Server = &http.Server{
 		Addr: addr,
@@ -89,8 +87,9 @@ func main() {
 			})),
 	}
 
-	slog.Info("Starting v2 server", slog.String("addr", addr))
-	if err = sp.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// Even if APOD fetching is disabled, the homepage can still serve the contents of /store
+	slog.Info("Starting Mesostic Generation Engine", slog.String("addr", addr))
+	if err = sp.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("Server failed", slog.Any("error", err))
 		os.Exit(1)
 	}

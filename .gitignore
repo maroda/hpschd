@@ -1,9 +1,7 @@
 # local files
 .env
 hpschd
-
-# ctags file
-tags
+store/
 
 # macOS
 .DS_Store
