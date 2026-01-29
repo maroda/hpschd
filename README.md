@@ -4,7 +4,7 @@
 
 **The Golang Writing-Through Mesostic Engine**
 
-This is my humble attempt at turning John Cage's "mesostic" writing style into a working API that can create automated poetry.
+This is my humble attempt at turning John Cage's "mesostic" writing style into a working API that can create automated poetry. Scroll to the bottom for history and background about mesostic poetry.
 
 ## JSON API
 
@@ -39,7 +39,7 @@ This is a simple webserver that displays a mesostic built from the [NASA Astrono
 It retrieves its content from a local datastore of mesostics.
 This store is filled by an automated process that queries the APOD API for a random date.
 
-## Operations
+## Usage
 
 To run this and display a Mesostic on the homepage, you will need an APOD API Key.
 Visit [NASA's API pages](https://api.nasa.gov) to sign up and get a free key.
@@ -150,16 +150,26 @@ like the APOD description shown here where the title is used as the Spine String
 To create more interesting poetry, some text is traded for whitespace.
 Future versions will allow for word density controls.
 
-## Release Notes
-- The LICENSE file has been repaired and set for v2 forward.
-- There may be bugs in the way the API consumes text.
-For instance, embedded control characters may create unpredictable results.
+## Why HPSCHD?
+
+This poetry generator used to run on `hpschd.xyz` before it became too expensive to keep running.
+It has kept the name for consistency.
+
+[HPSCHD](https://en.wikipedia.org/wiki/HPSCHD) is a work for harpsichords and electronics by Cage that was first presented as an enormous multi-media event co-produced with Lejaren Hiller. It is impressively dense, even just as an audio recording.
+
+## V2 Release Notes
+
+- **Claude** was used selectively to aid in some repetitive refactoring changes, like syntax problems and switching from _Log_ to _slog_. But.. there is _so much_ of my weird, script-idiomatic early programmer personality in the v1 code that it became a chore to do anything deeper. Claude often wants to overengineer and overoptimize, I find I have to spend twice as much time auditing Claude recommendations and subsequent changes. The power in this LLM, for me, still remains in the data-analysis and pattern-matching modes. I do not trust its thought-completion mode.
+- So, falling back on my trusted TDD approach, I rewrote all core functionality (with the exception of some older data functions) from scratch for v2. This code doesn't do much, but the mesostic algorithm is not simple, which led me to do a replace-only refactor. I even replicated the mistakes of v1's text parsing and held off on several feature improvements I have in mind.
+- The LICENSE file has been repaired and set for v2 forward (v1 was a broken CC license).
+- There may be bugs in the way the API consumes text. For instance, embedded control characters and sometimes line returns may create unpredictable results. Sometimes best results are when the source text is a single paragraph.
 - No controllable mesostic options (like rule strictness, word density) yet.
 
 ## Other Implementations
 
 Mesostic creation algorithms in the wild!
 These have controllable options like word density and rule selection.
+The UPenn one is a javascript clone of the python one.
 
 - Nicki Hoffman (python) ::: http://vyh.pythonanywhere.com/psmeso/
 - UPenn team (javascript) ::: http://mesostics.sas.upenn.edu/
