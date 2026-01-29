@@ -4,6 +4,8 @@
 
 **The Golang Writing-Through Mesostic Engine**
 
+This is my humble attempt at turning John Cage's "mesostic" writing style into a working API that can create automated poetry.
+
 ## JSON API
 
 The Mesostic Engine can be used directly via the API:
@@ -124,16 +126,34 @@ John Cage would run large amounts of text through a Mesostic algorithm to create
 The entry-text forms the lines of poetry and the Spine String (our term) forms the vertical letters down the middle.
 
 ### HPSCHD Mesostics
-The **50% Mesostic** is used to produce good output from small blocks of text, like the APOD descriptions.
+Here's one poem the API created from the 2004-01-27 APOD:
+```text
+Opportunity on Mars
 
-To create more interesting poetry, some text is discarded and traded for whitespace.
 
-> _In future versions there may be configuration options to follow more strict Mesostic rules._
+
+                      yOu've just w
+the surrounding landscaPe is barren
+          you transmit Pictures that are instantly rebr
+                      yOu a
+       you seek adventuRe
+       your mission is To explore 
+                     yoU have six wheels
+                      oNe arm
+               surroundIng you
+                    picTured above
+                       You
+```
+The **50% Mesostic** is used to produce good output from small blocks of text,
+like the APOD description shown here where the title is used as the Spine String.
+
+To create more interesting poetry, some text is traded for whitespace.
+Future versions will allow for word density controls.
 
 ## Release Notes
 - There may be bugs in the way the API consumes text.
 For instance, embedded control characters may create unpredictable results.
-- No controllable mesostic options (like rule strictness) yet.
+- No controllable mesostic options (like rule strictness, word density) yet.
 
 ## Other Implementations
 
