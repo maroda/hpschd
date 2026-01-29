@@ -151,6 +151,7 @@ To create more interesting poetry, some text is traded for whitespace.
 Future versions will allow for word density controls.
 
 ## Release Notes
+- The LICENSE file has been repaired and set for v2 forward.
 - There may be bugs in the way the API consumes text.
 For instance, embedded control characters may create unpredictable results.
 - No controllable mesostic options (like rule strictness, word density) yet.
