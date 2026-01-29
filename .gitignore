@@ -1,11 +1,8 @@
 # local files
-/store/
-/txrx/
 .env
 hpschd
 
 # ctags file
-c.out
 tags
 
 # macOS
@@ -13,3 +10,6 @@ tags
 
 # goreleaser
 dist/
+
+# IDE files
+.idea/
